@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,10 +13,10 @@ import (
 )
 
 type EventController struct {
-	eventService services.EventService
+	eventService services.EventServiceInterface
 }
 
-func NewEventController(s services.EventService) *EventController {
+func NewEventController(s services.EventServiceInterface) *EventController {
 	return &EventController{eventService: s}
 }
 
@@ -90,7 +90,19 @@ func toEventResponse(e *domain.Event) eventResponse {
 }
 
 func (h *EventController) GetAll(c *gin.Context) {
-	events, err := h.eventService.GetAll(c.Query("category"), c.Query("date"))
+	filters := domain.EventFilters{
+		Category: c.Query("category"),
+	}
+	if dateStr := c.Query("date"); dateStr != "" {
+		parsed, err := time.Parse("2006-01-02", dateStr)
+		if err == nil {
+			filters.DateFrom = &parsed
+			end := parsed.Add(24 * time.Hour)
+			filters.DateTo = &end
+		}
+	}
+
+	events, err := h.eventService.GetAll(filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -131,57 +143,51 @@ func (h *EventController) Create(c *gin.Context) {
 		return
 	}
 
-	event, err := toCreateEvent(&req, c.GetUint("userID"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	created, err := h.eventService.Create(event)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, toEventResponse(created))
-}
-
-func toCreateEvent(req *createEventRequest, userID uint) (*domain.Event, error) {
 	eventDate, err := time.Parse(time.RFC3339, req.EventDate)
 	if err != nil {
-		return nil, fmt.Errorf("invalid event_date, use RFC3339")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event_date, use RFC3339"})
+		return
 	}
 
-	event := &domain.Event{
-		Title:           req.Title,
-		Description:     optionalString(req.Description),
-		ImageURL:        optionalString(req.ImageURL),
-		Category:        optionalString(req.Category),
-		Location:        optionalString(req.Location),
-		EventDate:       eventDate,
-		DurationMinutes: req.DurationMinutes,
-		Capacity:        req.Capacity,
-		Price:           req.Price,
-		CreatedByID:     userID,
-	}
-
-	if req.PresaleCode != "" {
-		event.PresaleCode = &req.PresaleCode
-	}
+	var presaleStart, generalSale *time.Time
 	if req.PresaleStartDate != "" {
 		t, perr := time.Parse(time.RFC3339, req.PresaleStartDate)
 		if perr == nil {
-			event.PresaleStartDate = &t
+			presaleStart = &t
 		}
 	}
 	if req.GeneralSaleDate != "" {
 		t, perr := time.Parse(time.RFC3339, req.GeneralSaleDate)
 		if perr == nil {
-			event.GeneralSaleDate = &t
+			generalSale = &t
 		}
 	}
 
-	return event, nil
+	created, err := h.eventService.Create(services.CreateEventInput{
+		Title:            req.Title,
+		Date:             eventDate,
+		Duration:         req.DurationMinutes,
+		Capacity:         req.Capacity,
+		Price:            req.Price,
+		Category:         req.Category,
+		Description:      req.Description,
+		Location:         req.Location,
+		ImageURL:         req.ImageURL,
+		PresaleCode:      req.PresaleCode,
+		PresaleStartDate: presaleStart,
+		GeneralSaleDate:  generalSale,
+		CreatedByID:      c.GetUint("userID"),
+	})
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidInput) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, toEventResponse(created))
 }
 
 func (h *EventController) Update(c *gin.Context) {
@@ -197,16 +203,35 @@ func (h *EventController) Update(c *gin.Context) {
 		return
 	}
 
-	updates := buildEventUpdates(&req)
-	if len(updates) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
-		return
+	input := services.UpdateEventInput{
+		Title:       optionalString(req.Title),
+		Description: req.Description,
+		ImageURL:    req.ImageURL,
+		Category:    req.Category,
+		Location:    req.Location,
+		Duration:    req.DurationMinutes,
+		Capacity:    req.Capacity,
+		Price:       req.Price,
+		PresaleCode: req.PresaleCode,
+		Status:      req.Status,
 	}
+	if req.EventDate != "" {
+		t, perr := time.Parse(time.RFC3339, req.EventDate)
+		if perr == nil {
+			input.Date = &t
+		}
+	}
+	input.PresaleStartDate = req.PresaleStartDate
+	input.GeneralSaleDate = req.GeneralSaleDate
 
-	event, err := h.eventService.Update(uint(id), updates)
+	event, err := h.eventService.Update(uint(id), input)
 	if err != nil {
 		if isNotFound(err) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
+			return
+		}
+		if errors.Is(err, services.ErrEventCancelled) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -223,7 +248,7 @@ func (h *EventController) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := h.eventService.Delete(uint(id)); err != nil {
+	if err := h.eventService.Cancel(uint(id)); err != nil {
 		if isNotFound(err) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
 			return
@@ -233,59 +258,4 @@ func (h *EventController) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusNoContent, nil)
-}
-
-func buildEventUpdates(req *updateEventRequest) map[string]interface{} {
-	updates := make(map[string]interface{})
-
-	if req.Title != "" {
-		updates["title"] = req.Title
-	}
-	if req.Description != nil {
-		updates["description"] = *req.Description
-	}
-	if req.ImageURL != nil {
-		updates["image_url"] = *req.ImageURL
-	}
-	if req.Category != nil {
-		updates["category"] = *req.Category
-	}
-	if req.Location != nil {
-		updates["location"] = *req.Location
-	}
-	if req.EventDate != "" {
-		t, err := time.Parse(time.RFC3339, req.EventDate)
-		if err == nil {
-			updates["event_date"] = t
-		}
-	}
-	if req.DurationMinutes != nil {
-		updates["duration_minutes"] = *req.DurationMinutes
-	}
-	if req.Capacity != nil {
-		updates["capacity"] = *req.Capacity
-	}
-	if req.Price != nil {
-		updates["price"] = *req.Price
-	}
-	if req.PresaleCode != nil {
-		updates["presale_code"] = *req.PresaleCode
-	}
-	if req.PresaleStartDate != nil {
-		t, err := time.Parse(time.RFC3339, *req.PresaleStartDate)
-		if err == nil {
-			updates["presale_start_date"] = t
-		}
-	}
-	if req.GeneralSaleDate != nil {
-		t, err := time.Parse(time.RFC3339, *req.GeneralSaleDate)
-		if err == nil {
-			updates["general_sale_date"] = t
-		}
-	}
-	if req.Status != nil {
-		updates["status"] = *req.Status
-	}
-
-	return updates
 }

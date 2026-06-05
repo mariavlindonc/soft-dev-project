@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,10 +13,10 @@ import (
 )
 
 type TicketController struct {
-	ticketService services.TicketService
+	ticketService services.TicketServiceInterface
 }
 
-func NewTicketController(s services.TicketService) *TicketController {
+func NewTicketController(s services.TicketServiceInterface) *TicketController {
 	return &TicketController{ticketService: s}
 }
 
@@ -24,7 +25,7 @@ type purchaseTicketRequest struct {
 }
 
 type transferTicketRequest struct {
-	ToUserID uint `json:"to_user_id" binding:"required"`
+	ToUserEmail string `json:"to_user_email" binding:"required,email"`
 }
 
 type ticketResponse struct {
@@ -56,8 +57,12 @@ func (h *TicketController) Purchase(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	ticket, err := h.ticketService.Purchase(userID, req.EventID)
+	ticket, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID})
 	if err != nil {
+		if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -118,7 +123,7 @@ func (h *TicketController) Transfer(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	if err := h.ticketService.Transfer(uint(id), userID, req.ToUserID); err != nil {
+	if err := h.ticketService.Transfer(uint(id), userID, services.TransferInput{ToUserEmail: req.ToUserEmail}); err != nil {
 		if isNotFound(err) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "ticket not found"})
 			return

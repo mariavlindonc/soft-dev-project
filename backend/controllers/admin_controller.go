@@ -9,11 +9,11 @@ import (
 )
 
 type AdminController struct {
-	adminService services.AdminService
+	reportService services.ReportServiceInterface
 }
 
-func NewAdminController(s services.AdminService) *AdminController {
-	return &AdminController{adminService: s}
+func NewAdminController(s services.ReportServiceInterface) *AdminController {
+	return &AdminController{reportService: s}
 }
 
 type eventSummary struct {
@@ -24,35 +24,26 @@ type eventSummary struct {
 	Occupancy   float64 `json:"occupancy"`
 }
 
-type reportResponse struct {
-	TotalCapacity int            `json:"total_capacity"`
-	TicketsSold   int            `json:"tickets_sold"`
-	OccupancyRate float64        `json:"occupancy_rate"`
-	Events        []eventSummary `json:"events"`
+type globalReportResponse struct {
+	TotalEvents      int            `json:"total_events"`
+	TotalTicketsSold int            `json:"total_tickets_sold"`
+	Events           []eventSummary `json:"events"`
 }
 
-func toReportResponse(report *services.Report) reportResponse {
-	resp := reportResponse{
-		TotalCapacity: report.TotalCapacity,
-		TicketsSold:   report.TicketsSold,
-		Events:        make([]eventSummary, 0, len(report.Events)),
+func toGlobalReportResponse(report *services.GlobalReport) globalReportResponse {
+	resp := globalReportResponse{
+		TotalEvents:      report.TotalEvents,
+		TotalTicketsSold: report.TotalTicketsSold,
+		Events:           make([]eventSummary, 0, len(report.EventReports)),
 	}
 
-	if resp.TotalCapacity > 0 {
-		resp.OccupancyRate = float64(resp.TicketsSold) / float64(resp.TotalCapacity) * 100
-	}
-
-	for _, e := range report.Events {
-		occ := 0.0
-		if e.Capacity > 0 {
-			occ = float64(e.TicketsSold) / float64(e.Capacity) * 100
-		}
+	for _, e := range report.EventReports {
 		resp.Events = append(resp.Events, eventSummary{
 			EventID:     e.EventID,
-			Title:       e.Title,
-			Capacity:    e.Capacity,
+			Title:       e.EventTitle,
+			Capacity:    e.TotalCapacity,
 			TicketsSold: e.TicketsSold,
-			Occupancy:   occ,
+			Occupancy:   e.Occupancy,
 		})
 	}
 
@@ -60,11 +51,11 @@ func toReportResponse(report *services.Report) reportResponse {
 }
 
 func (h *AdminController) GetReports(c *gin.Context) {
-	report, err := h.adminService.GetReports()
+	report, err := h.reportService.GetGlobalReport()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, toReportResponse(report))
+	c.JSON(http.StatusOK, toGlobalReportResponse(report))
 }

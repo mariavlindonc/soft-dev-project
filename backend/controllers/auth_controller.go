@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"backend/services"
@@ -9,10 +10,10 @@ import (
 )
 
 type AuthController struct {
-	authService services.AuthService
+	authService services.AuthServiceInterface
 }
 
-func NewAuthController(s services.AuthService) *AuthController {
+func NewAuthController(s services.AuthServiceInterface) *AuthController {
 	return &AuthController{authService: s}
 }
 
@@ -45,8 +46,16 @@ func (h *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	user, err := h.authService.Register(req.Name, req.Email, req.Password)
+	user, err := h.authService.Register(services.RegisterInput{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+	})
 	if err != nil {
+		if errors.Is(err, services.ErrInvalidInput) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -66,7 +75,10 @@ func (h *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.authService.Login(req.Email, req.Password)
+	token, err := h.authService.Login(services.LoginInput{
+		Email:    req.Email,
+		Password: req.Password,
+	})
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
 		return

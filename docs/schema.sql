@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS events (
 
     -- Extra function - presale
     status              ENUM('active', 'presale', 'sold_out', 'cancelled') NOT NULL DEFAULT 'active',
+    presale_active      TINYINT(1)       NOT NULL DEFAULT 0,      -- Whether pre-sale is enabled
     presale_code        VARCHAR(100)     NULL,                    -- Anticipated access code
     presale_start_date  DATETIME         NULL,                    -- Start of presale
     general_sale_date   DATETIME         NULL,                    -- Start of general sale
@@ -73,8 +74,9 @@ CREATE TABLE IF NOT EXISTS tickets (
     INDEX idx_tickets_user_id    (user_id),
     INDEX idx_tickets_event_id   (event_id),
     INDEX idx_tickets_event_status (event_id, status),
-    INDEX idx_tickets_status     (status),
+    INDEX idx_tickets_status      (status),
     INDEX idx_tickets_transferred_to (transferred_to_id),
+    INDEX idx_tickets_user_id_status (user_id, status),
 
     CONSTRAINT fk_tickets_user
         FOREIGN KEY (user_id) REFERENCES users (id)

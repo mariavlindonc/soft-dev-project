@@ -2,14 +2,19 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"time"
+
+	"backend/logger"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormLogger "gorm.io/gorm/logger"
 )
+
+const maxRetries = 15
+const retryDelay = 2 * time.Second
 
 type Database struct {
 	conn *gorm.DB
@@ -18,7 +23,7 @@ type Database struct {
 func NewDatabase() (*Database, error) {
 	// Load .env
 	if err := godotenv.Load(); err != nil {
-		log.Println("warning: .env file not found, using system env vars")
+		logger.Warn(".env file not found, using system env vars")
 	}
 
 	// Read credentials
@@ -33,18 +38,27 @@ func NewDatabase() (*Database, error) {
 		return nil, fmt.Errorf("failed to ensure database: %w", err)
 	}
 
-	// Connect
+	// Connect with retry (handles Docker depends_on race condition)
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		user, pass, host, port, name)
 
-	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+	var conn *gorm.DB
+	var lastErr error
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		conn, lastErr = gorm.Open(mysql.Open(dsn), &gorm.Config{
+			Logger: gormLogger.Default.LogMode(gormLogger.Info),
+		})
+		if lastErr == nil {
+			break
+		}
+		logger.Warn("database connection attempt %d/%d failed: %v", attempt, maxRetries, lastErr)
+		time.Sleep(retryDelay)
+	}
+	if lastErr != nil {
+		return nil, fmt.Errorf("failed to connect to database after %d retries: %w", maxRetries, lastErr)
 	}
 
-	log.Println("database connected successfully")
+	logger.Info("database connected successfully")
 	return &Database{conn: conn}, nil
 }
 
@@ -64,7 +78,7 @@ func (d *Database) Migrate(models ...interface{}) error {
 		return fmt.Errorf("failed to add CHECK constraint: %w", err)
 	}
 
-	log.Println("migrations completed successfully")
+	logger.Info("migrations completed successfully")
 	return nil
 }
 
@@ -81,7 +95,7 @@ func ensureDatabase(host, port, user, pass, name string) error {
 		user, pass, host, port)
 
 	tmpDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger: gormLogger.Default.LogMode(gormLogger.Silent),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to connect to MySQL server: %w", err)
@@ -98,7 +112,7 @@ func ensureDatabase(host, port, user, pass, name string) error {
 	}
 	defer sqlDB.Close()
 
-	log.Printf("database `%s` ensured", name)
+	logger.Info("database `%s` ensured", name)
 	return nil
 }
 

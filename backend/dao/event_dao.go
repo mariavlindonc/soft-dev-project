@@ -56,4 +56,14 @@ func (d *EventDAOImpl) Delete(id uint) error {
 	return d.db.Delete(&domain.Event{}, id).Error
 }
 
+func (d *EventDAOImpl) IncrementTicketsSold(eventID uint) error {
+	return d.db.Model(&domain.Event{}).Where("id = ?", eventID).
+		UpdateColumn("tickets_sold", gorm.Expr("tickets_sold + 1")).Error
+}
+
+func (d *EventDAOImpl) DecrementTicketsSold(eventID uint) error {
+	return d.db.Model(&domain.Event{}).Where("id = ? AND tickets_sold > 0", eventID).
+		UpdateColumn("tickets_sold", gorm.Expr("tickets_sold - 1")).Error
+}
+
 var _ EventDAO = (*EventDAOImpl)(nil)

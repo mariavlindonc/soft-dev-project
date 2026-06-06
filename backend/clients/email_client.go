@@ -3,10 +3,11 @@ package clients
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/smtp"
 	"os"
 	"time"
+
+	"backend/logger"
 )
 
 // TicketInfo represents the ticket data needed by email templates.
@@ -58,17 +59,17 @@ func NewEmailClient() EmailClient {
 type logEmailClient struct{}
 
 func (c *logEmailClient) SendPurchaseConfirmation(to string, ticket TicketInfo) error {
-	log.Printf("[EMAIL] Purchase confirmation → %s | event=%s ticket=#%d", to, ticket.EventTitle, ticket.TicketID)
+	logger.Info("email purchase confirmation to=%s event=%s ticket=%d", to, ticket.EventTitle, ticket.TicketID)
 	return nil
 }
 
 func (c *logEmailClient) SendCancellationNotice(to string, ticket TicketInfo) error {
-	log.Printf("[EMAIL] Cancellation notice → %s | event=%s ticket=#%d", to, ticket.EventTitle, ticket.TicketID)
+	logger.Info("email cancellation notice to=%s event=%s ticket=%d", to, ticket.EventTitle, ticket.TicketID)
 	return nil
 }
 
 func (c *logEmailClient) SendTransferNotice(from, to string, ticket TicketInfo) error {
-	log.Printf("[EMAIL] Transfer notice → %s (from %s) | event=%s ticket=#%d", to, from, ticket.EventTitle, ticket.TicketID)
+	logger.Info("email transfer notice from=%s to=%s event=%s ticket=%d", from, to, ticket.EventTitle, ticket.TicketID)
 	return nil
 }
 

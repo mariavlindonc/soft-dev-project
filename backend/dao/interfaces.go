@@ -17,6 +17,8 @@ type EventDAO interface {
 	Create(event *domain.Event) error
 	Update(event *domain.Event) error
 	Delete(id uint) error
+	IncrementTicketsSold(eventID uint) error
+	DecrementTicketsSold(eventID uint) error
 }
 
 // ---------------------------------------------------------------------------

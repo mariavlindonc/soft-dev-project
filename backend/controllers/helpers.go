@@ -1,6 +1,9 @@
 package controllers
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 // notFoundError is implemented by service-layer error types
 // to signal a resource-not-found condition without coupling
@@ -18,5 +21,13 @@ func optionalString(s string) *string {
 	if s == "" {
 		return nil
 	}
+	return &s
+}
+
+func timePtrToString(t *time.Time) *string {
+	if t == nil {
+		return nil
+	}
+	s := t.Format(time.RFC3339)
 	return &s
 }

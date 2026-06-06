@@ -21,7 +21,8 @@ func NewTicketController(s services.TicketServiceInterface) *TicketController {
 }
 
 type purchaseTicketRequest struct {
-	EventID uint `json:"event_id" binding:"required"`
+	EventID     uint   `json:"event_id"     binding:"required"`
+	PresaleCode string `json:"presale_code"`
 }
 
 type transferTicketRequest struct {
@@ -57,7 +58,7 @@ func (h *TicketController) Purchase(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	ticket, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID})
+	ticket, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID, PresaleCode: req.PresaleCode})
 	if err != nil {
 		if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

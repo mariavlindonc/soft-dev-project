@@ -2,12 +2,12 @@ package services
 
 import (
 	"fmt"
-	"log"
 	"time"
 
+	"backend/clients"
 	db "backend/dao"
 	"backend/domain"
-	"backend/clients"
+	"backend/logger"
 )
 
 // ---------------------------------------------------------------------------
@@ -26,7 +26,8 @@ type TicketServiceInterface interface {
 // ---------------------------------------------------------------------------
 
 type PurchaseInput struct {
-	EventID uint
+	EventID     uint
+	PresaleCode string
 }
 
 type TransferInput struct {
@@ -59,8 +60,9 @@ func NewTicketService(
 }
 
 // Purchase validates that the event exists, is not cancelled,
-// and has available capacity, then creates the ticket inside a
-// database transaction to avoid race conditions.
+// enforces pre-sale phase rules (before capacity check to avoid
+// leaking capacity info), and creates the ticket inside a
+// database transaction.
 func (s *TicketService) Purchase(userID uint, input PurchaseInput) (*domain.Ticket, error) {
 	event, err := s.eventDAO.FindByID(input.EventID)
 	if err != nil {
@@ -68,6 +70,19 @@ func (s *TicketService) Purchase(userID uint, input PurchaseInput) (*domain.Tick
 	}
 	if event.Status == "cancelled" {
 		return nil, fmt.Errorf("event %d: %w", event.ID, ErrEventCancelled)
+	}
+
+	// Pre-sale phase validation (runs before capacity check).
+	switch event.CurrentSalePhase(time.Now()) {
+	case domain.PhaseNotYetOpen:
+		return nil, fmt.Errorf("event %d: %w", event.ID, ErrSalesNotOpen)
+	case domain.PhasePresale:
+		if input.PresaleCode == "" {
+			return nil, fmt.Errorf("event %d: %w", event.ID, ErrPresaleCodeRequired)
+		}
+		if event.PresaleCode == nil || input.PresaleCode != *event.PresaleCode {
+			return nil, fmt.Errorf("event %d: %w", event.ID, ErrInvalidPresaleCode)
+		}
 	}
 
 	activeCount, err := s.ticketDAO.CountActiveByEvent(event.ID)
@@ -86,7 +101,10 @@ func (s *TicketService) Purchase(userID uint, input PurchaseInput) (*domain.Tick
 	}
 
 	if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error {
-		return s.ticketDAO.Create(ticket)
+		if err := s.ticketDAO.Create(ticket); err != nil {
+			return err
+		}
+		return s.eventDAO.IncrementTicketsSold(event.ID)
 	}); err != nil {
 		return nil, fmt.Errorf("purchase ticket: %w", err)
 	}
@@ -118,7 +136,12 @@ func (s *TicketService) Cancel(ticketID uint, requestingUserID uint) error {
 	ticket.Status = "cancelled"
 	ticket.CancelledAt = &now
 
-	if err := s.ticketDAO.Save(ticket); err != nil {
+	if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error {
+		if err := s.ticketDAO.Save(ticket); err != nil {
+			return err
+		}
+		return s.eventDAO.DecrementTicketsSold(ticket.EventID)
+	}); err != nil {
 		return fmt.Errorf("cancel ticket: %w", err)
 	}
 
@@ -173,43 +196,43 @@ func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferI
 func (s *TicketService) sendPurchaseEmail(userID uint, ticket *domain.Ticket, event *domain.Event) {
 	user, err := s.userDAO.FindByID(userID)
 	if err != nil {
-		log.Printf("warn: send purchase email: find user %d: %v", userID, err)
+		logger.Warn("send purchase email: find user %d: %v", userID, err)
 		return
 	}
 	if err := s.emailClient.SendPurchaseConfirmation(user.Email, toTicketInfo(ticket, event)); err != nil {
-		log.Printf("warn: send purchase confirmation for ticket %d: %v", ticket.ID, err)
+		logger.Warn("send purchase confirmation for ticket %d: %v", ticket.ID, err)
 	}
 }
 
 func (s *TicketService) sendCancellationEmail(userID uint, ticket *domain.Ticket) {
 	user, err := s.userDAO.FindByID(userID)
 	if err != nil {
-		log.Printf("warn: send cancellation email: find user %d: %v", userID, err)
+		logger.Warn("send cancellation email: find user %d: %v", userID, err)
 		return
 	}
 	event, err := s.eventDAO.FindByID(ticket.EventID)
 	if err != nil {
-		log.Printf("warn: send cancellation email: find event %d: %v", ticket.EventID, err)
+		logger.Warn("send cancellation email: find event %d: %v", ticket.EventID, err)
 		return
 	}
 	if err := s.emailClient.SendCancellationNotice(user.Email, toTicketInfo(ticket, event)); err != nil {
-		log.Printf("warn: send cancellation notice for ticket %d: %v", ticket.ID, err)
+		logger.Warn("send cancellation notice for ticket %d: %v", ticket.ID, err)
 	}
 }
 
 func (s *TicketService) sendTransferEmail(fromUserID uint, toUser *domain.User, ticket *domain.Ticket) {
 	fromUser, err := s.userDAO.FindByID(fromUserID)
 	if err != nil {
-		log.Printf("warn: send transfer email: find fromUser %d: %v", fromUserID, err)
+		logger.Warn("send transfer email: find fromUser %d: %v", fromUserID, err)
 		return
 	}
 	event, err := s.eventDAO.FindByID(ticket.EventID)
 	if err != nil {
-		log.Printf("warn: send transfer email: find event %d: %v", ticket.EventID, err)
+		logger.Warn("send transfer email: find event %d: %v", ticket.EventID, err)
 		return
 	}
 	if err := s.emailClient.SendTransferNotice(fromUser.Email, toUser.Email, toTicketInfo(ticket, event)); err != nil {
-		log.Printf("warn: send transfer notice for ticket %d: %v", ticket.ID, err)
+		logger.Warn("send transfer notice for ticket %d: %v", ticket.ID, err)
 	}
 }
 

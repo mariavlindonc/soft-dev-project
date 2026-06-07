@@ -23,11 +23,16 @@ type registerRequest struct {
 	Password string `json:"password" binding:"required,min=8"`
 }
 
-type registerResponse struct {
+type userResponse struct {
 	ID    uint   `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
+}
+
+type registerResponse struct {
+	Token string       `json:"token"`
+	User  userResponse `json:"user"`
 }
 
 type loginRequest struct {
@@ -36,7 +41,8 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
-	Token string `json:"token"`
+	Token string       `json:"token"`
+	User  userResponse `json:"user"`
 }
 
 func (h *AuthController) Register(c *gin.Context) {
@@ -60,11 +66,20 @@ func (h *AuthController) Register(c *gin.Context) {
 		return
 	}
 
+	token, err := h.authService.GenerateToken(user.ID, user.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "registration succeeded but token generation failed"})
+		return
+	}
+
 	c.JSON(http.StatusCreated, registerResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-		Role:  user.Role,
+		Token: token,
+		User: userResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  user.Role,
+		},
 	})
 }
 
@@ -75,7 +90,7 @@ func (h *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := h.authService.Login(services.LoginInput{
+	token, user, err := h.authService.Login(services.LoginInput{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -84,5 +99,13 @@ func (h *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, loginResponse{Token: token})
+	c.JSON(http.StatusOK, loginResponse{
+		Token: token,
+		User: userResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  user.Role,
+		},
+	})
 }

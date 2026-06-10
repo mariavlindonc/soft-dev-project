@@ -6,32 +6,31 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="navbar-inner">
-        <Link to="/" className="navbar-brand">
-          Ceibo
-        </Link>
+      <Link to="/" className="navbar__logo">Ceibo</Link>
 
-        <div className="navbar-links">
-          <Link to="/events" className="nav-link">Eventos</Link>
-          {isAdmin && <Link to="/admin" className="nav-link">Admin</Link>}
-        </div>
+      <div className="navbar__primary-links">
+        <Link to="/events">Eventos</Link>
+        {isAdmin && <Link to="/admin">Admin</Link>}
+      </div>
 
-        <div className="navbar-actions">
-          {isAuthenticated ? (
-            <>
-              <span className="navbar-user">{user?.name}</span>
-              <Link to="/tickets" className="nav-link">Mis Entradas</Link>
-              <button type="button" className="btn btn-outline" onClick={logout}>
-                Cerrar Sesión
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-outline">Iniciar Sesión</Link>
-              <Link to="/register" className="btn btn-primary">Registrarse</Link>
-            </>
-          )}
-        </div>
+      <div className="navbar__secondary-links">
+        {isAuthenticated ? (
+          <>
+            <Link to="/tickets">Mis Entradas</Link>
+            <span className="navbar__user-name">{user?.name}</span>
+            <button type="button" className="navbar__logout" onClick={logout}>
+              Cerrar Sesión
+            </button>
+            <div className="navbar__avatar">
+              {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+            </div>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Iniciar Sesión</Link>
+            <Link to="/register">Registrarse</Link>
+          </>
+        )}
       </div>
     </nav>
   )

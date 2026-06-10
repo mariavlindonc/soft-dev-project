@@ -78,9 +78,9 @@ go test ./... -v -cover
 | Paquete | Tipo | Cobertura actual |
 |---------|------|:----------------:|
 | domain/ | Unitario (puro) | 9/9 tests |
-| utils/ | Unitario (puro) | - |
-| services/ | Unitario (mocks) | - |
-| controllers/ | Integracion (httptest) | - |
+| utils/ | Unitario (puro) | 9/9 tests |
+| services/ | Unitario (mocks) | 27/27 tests |
+| controllers/ | Integracion (httptest) | 27/27 tests |
 
 ### Tests de servicios
 
@@ -93,6 +93,26 @@ Usan **net/http/httptest** para enviar requests HTTP directamente contra los han
 ### Tests ejecutados
 
 - TestCurrentSalePhase - 9 subtest (todos PASS) que cubren las 4 fases de venta mas casos borde con fechas nil y valores exactos en los limites.
+
+### Tests de utils
+
+- **password_test.go** - HashPassword, CheckPassword (correcta, incorrecta, vacia), HashPasswordUnique
+- **jwt_test.go** - GenerateJWT, ValidateToken (valido, firma invalida, malformado, vacio)
+
+### Tests de servicios (con testify/mock)
+
+- **auth_service_test.go** - Register (exito, password corta, email duplicado), Login (exito, password incorrecta, email desconocido)
+- **event_service_test.go** - GetAll, GetByID (exito, no encontrado), Create (valido, titulo vacio, capacidad cero, fecha pasada), Cancel (activo, ya cancelado, no encontrado), Update (exito, cancelado, no encontrado)
+- **ticket_service_test.go** - Purchase (exito, evento cancelado, sin capacidad), PurchasePresale (codigo correcto, sin codigo, codigo incorrecto), CancelTicket (propio, ajeno, ya cancelado), Transfer (a otro usuario, a si mismo), GetByUser, PurchaseNotFound
+- **report_service_test.go** - GetEventReport (exito, no encontrado), GetGlobalReport
+
+### Tests de controladores (httptest)
+
+- **middleware_test.go** - AuthRequired (sin header, formato invalido, token malformado), AdminRequired (admin pasa, client 403, sin rol 403)
+- **auth_controller_test.go** - Register (201, 400 campos faltantes, 400 email duplicado), Login (200 con token, 401 credenciales invalidas, 400 campo faltante)
+- **event_controller_test.go** - GetAll (200), GetByID (200, 404, 400), Create (201, 400), Update (200, 404), Delete (204, 404), GetSaleStatus (200)
+- **ticket_controller_test.go** - Purchase (201, 400 evento cancelado, 400 campo faltante), GetMyTickets (200), Cancel (204, 404), Transfer (200, 400 campo faltante)
+- **admin_controller_test.go** - GetReports (200), GetEventReport (200, 404)
 
 ## Funcionalidades
 

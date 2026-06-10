@@ -1,6 +1,23 @@
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import banner1 from '../../assets/banner1.jpg'
+import banner2 from '../../assets/banner2.jpg'
+import banner3 from '../../assets/banner3.jpg'
+
+const BANNERS = [banner1, banner2, banner3]
 
 export default function HeroSection() {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  const next = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % BANNERS.length)
+  }, [])
+
+  useEffect(() => {
+    const timer = setInterval(next, 5000)
+    return () => clearInterval(timer)
+  }, [next])
+
   return (
     <section className="hero">
       <div className="hero__card">
@@ -12,16 +29,28 @@ export default function HeroSection() {
             Explorar Eventos
           </Link>
           <div className="hero__dots">
-            <button type="button" className="hero__dot hero__dot--active" aria-label="Slide 1" />
-            <button type="button" className="hero__dot" aria-label="Slide 2" />
-            <button type="button" className="hero__dot" aria-label="Slide 3" />
+            {BANNERS.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`hero__dot${i === activeIndex ? ' hero__dot--active' : ''}`}
+                aria-label={`Slide ${i + 1}`}
+                onClick={() => setActiveIndex(i)}
+              />
+            ))}
           </div>
         </div>
         <div className="hero__right">
-          <div className="hero__event-label">Events</div>
-          <div className="hero__favorites">
-            &#9829; 12.8k
-          </div>
+          {BANNERS.map((src, i) => (
+            <div
+              key={i}
+              className="hero__carousel-image"
+              style={{
+                backgroundImage: `url(${src})`,
+                opacity: i === activeIndex ? 1 : 0,
+              }}
+            />
+          ))}
         </div>
       </div>
     </section>

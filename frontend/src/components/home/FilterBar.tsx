@@ -1,4 +1,4 @@
-const CATEGORIES = ['Conciertos', 'Teatro', 'Deportes', 'Conferencias', 'Festivales', 'Talleres']
+const CATEGORIES = ['Aire Libre', 'En Salón', 'Grupos Emergentes']
 
 export default function FilterBar() {
   return (

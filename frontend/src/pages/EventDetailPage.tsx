@@ -3,22 +3,48 @@ import { useParams, Link } from 'react-router-dom'
 import type { Event, SaleStatus } from '../types'
 import { getEventById, getSaleStatus } from '../api/events'
 import { purchaseTicket } from '../api/tickets'
+import { mockEvents } from '../data/mockEvents'
 import { useAuth } from '../context/AuthContext'
-import { formatDate, formatPrice } from '../utils/format'
+import { formatDateTime, formatPrice } from '../utils/format'
+
+function computeSaleStatus(event: Event): SaleStatus {
+  if (event.status === 'cancelled') {
+    return { phase: 'not_yet_open', presale_start_date: null, general_sale_date: null, message: 'Evento cancelado' }
+  }
+  if (event.tickets_sold >= event.capacity) {
+    return { phase: 'not_yet_open', presale_start_date: null, general_sale_date: null, message: 'Entradas agotadas' }
+  }
+  if (event.presale_active && event.presale_start_date && new Date(event.presale_start_date) <= new Date()) {
+    if (event.general_sale_date && new Date(event.general_sale_date) <= new Date()) {
+      return { phase: 'public', presale_start_date: event.presale_start_date, general_sale_date: event.general_sale_date, message: 'Venta general disponible' }
+    }
+    return { phase: 'presale', presale_start_date: event.presale_start_date, general_sale_date: event.general_sale_date, message: 'Preventa disponible — ingresá tu código' }
+  }
+  if (event.presale_active && event.presale_start_date && new Date(event.presale_start_date) > new Date()) {
+    return { phase: 'not_yet_open', presale_start_date: event.presale_start_date, general_sale_date: event.general_sale_date, message: 'Preventa próximamente' }
+  }
+  return { phase: 'public', presale_start_date: null, general_sale_date: null, message: 'Entradas disponibles' }
+}
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, login, register } = useAuth()
 
   const [event, setEvent] = useState<Event | null>(null)
   const [saleStatus, setSaleStatus] = useState<SaleStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const [quantity, setQuantity] = useState(1)
   const [presaleCode, setPresaleCode] = useState('')
   const [purchasing, setPurchasing] = useState(false)
   const [purchaseError, setPurchaseError] = useState<string | null>(null)
   const [purchased, setPurchased] = useState(false)
+
+  const [authName, setAuthName] = useState('')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -30,16 +56,42 @@ export default function EventDetailPage() {
         setEvent(ev)
         setSaleStatus(sale)
       })
-      .catch(() => setError('No se pudo cargar el evento'))
+      .catch(() => {
+        const mock = mockEvents.find((e) => e.id === numId)
+        if (mock) {
+          setEvent(mock)
+          setSaleStatus(computeSaleStatus(mock))
+        } else {
+          setError('Evento no encontrado')
+        }
+      })
       .finally(() => setLoading(false))
   }, [id])
 
   const isPresaleCodeRequired =
     saleStatus?.phase === 'presale' && saleStatus.message.toLowerCase().includes('code')
 
+  const available = event ? event.capacity - event.tickets_sold : 0
+
   async function handlePurchase() {
     if (!event) return
     setPurchaseError(null)
+
+    if (!isAuthenticated) {
+      setPurchasing(true)
+      try {
+        if (isRegistering) {
+          await register({ name: authName, email: authEmail, password: authPassword })
+        } else {
+          await login({ email: authEmail, password: authPassword })
+        }
+      } catch {
+        setPurchaseError('Error al iniciar sesión. Verificá tus datos.')
+        setPurchasing(false)
+        return
+      }
+    }
+
     setPurchasing(true)
     try {
       await purchaseTicket({
@@ -116,7 +168,7 @@ export default function EventDetailPage() {
             <div className="event-detail-meta">
               <div className="event-detail-meta-item">
                 <span>📅</span>
-                <span>{formatDate(event.event_date)}</span>
+                <span>{formatDateTime(event.event_date)}</span>
               </div>
               {event.location && (
                 <div className="event-detail-meta-item">
@@ -143,7 +195,7 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {event.tickets_sold < event.capacity && (
+            {event.tickets_sold < event.capacity && saleStatus && saleStatus.phase !== 'not_yet_open' && (
               <div className="purchase-section">
                 {saleStatus && (
                   <span className={`sale-status ${phaseClass[saleStatus.phase] ?? 'closed'}`}>
@@ -168,26 +220,65 @@ export default function EventDetailPage() {
                   </div>
                 )}
 
-                {purchaseError && <div className="form-global-error">{purchaseError}</div>}
+                <div className="purchase-quantity">
+                  <span className="purchase-quantity-label">Cantidad</span>
+                  <div className="purchase-quantity-controls">
+                    <button
+                      type="button"
+                      className="purchase-quantity-btn"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="purchase-quantity-value">{quantity}</span>
+                    <button
+                      type="button"
+                      className="purchase-quantity-btn"
+                      onClick={() => setQuantity((q) => Math.min(available, q + 1))}
+                      disabled={quantity >= available}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <span className="purchase-total">{formatPrice(event.price * quantity)}</span>
+                </div>
 
-                {saleStatus && saleStatus.phase !== 'not_yet_open' && (
-                  <div className="purchase-actions">
-                    {isAuthenticated ? (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-lg"
-                        onClick={handlePurchase}
-                        disabled={purchasing || (isPresaleCodeRequired && !presaleCode.trim())}
-                      >
-                        {purchasing ? 'Comprando…' : 'Comprar entrada'}
-                      </button>
-                    ) : (
-                      <div className="alert alert-info">
-                        <Link to="/login" className="auth-link">Iniciá sesión</Link> para comprar entradas.
+                {!isAuthenticated && (
+                  <div className="purchase-auth-form">
+                    <p className="purchase-auth-title">{isRegistering ? 'Crear cuenta' : 'Iniciar sesión'}</p>
+                    {isRegistering && (
+                      <div className="form-group">
+                        <label htmlFor="authName">Nombre</label>
+                        <input id="authName" type="text" value={authName} onChange={(e) => setAuthName(e.target.value)} placeholder="Tu nombre" />
                       </div>
                     )}
+                    <div className="form-group">
+                      <label htmlFor="authEmail">Email</label>
+                      <input id="authEmail" type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="correo@ejemplo.com" />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="authPassword">Contraseña</label>
+                      <input id="authPassword" type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} placeholder="••••••••" />
+                    </div>
+                    <button type="button" className="btn btn-outline btn-sm" onClick={() => { setIsRegistering(!isRegistering); setPurchaseError(null) }}>
+                      {isRegistering ? 'Ya tengo cuenta' : 'Crear cuenta nueva'}
+                    </button>
                   </div>
                 )}
+
+                {purchaseError && <div className="form-global-error">{purchaseError}</div>}
+
+                <div className="purchase-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-lg"
+                    onClick={handlePurchase}
+                    disabled={purchasing || (isPresaleCodeRequired && !presaleCode.trim()) || (!isAuthenticated && !authEmail.trim() || !authPassword.trim())}
+                  >
+                    {purchasing ? 'Comprando…' : `Comprar ${quantity > 1 ? `${quantity} entradas` : 'entrada'}`}
+                  </button>
+                </div>
               </div>
             )}
           </div>

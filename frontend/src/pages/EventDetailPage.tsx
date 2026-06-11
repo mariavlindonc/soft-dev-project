@@ -195,7 +195,7 @@ export default function EventDetailPage() {
               )}
             </div>
 
-            {event.tickets_sold < event.capacity && saleStatus && saleStatus.phase !== 'not_yet_open' && (
+            {event.tickets_sold < event.capacity && (
               <div className="purchase-section">
                 {saleStatus && (
                   <span className={`sale-status ${phaseClass[saleStatus.phase] ?? 'closed'}`}>

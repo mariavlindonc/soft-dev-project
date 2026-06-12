@@ -8,17 +8,32 @@ interface EventCardProps {
   event: Event
 }
 
+type CardBadge = { key: string; label: string } | null
+
+function getBadge(event: Event): CardBadge {
+  if (event.status === 'cancelled') {
+    return { key: 'cancelled', label: 'Cancelado' }
+  }
+  if (event.tickets_sold >= event.capacity) {
+    return { key: 'sold_out', label: 'Agotado' }
+  }
+  if (event.presale_active && event.presale_start_date && event.general_sale_date) {
+    const now = new Date()
+    const presaleStart = new Date(event.presale_start_date)
+    const generalSale = new Date(event.general_sale_date)
+    if (now < presaleStart) {
+      return { key: 'upcoming', label: 'Próximamente' }
+    }
+    if (now >= presaleStart && now < generalSale) {
+      return { key: 'presale', label: 'Preventa' }
+    }
+  }
+  return null
+}
+
 export default function EventCard({ event }: EventCardProps) {
   const image = useMemo(getRandomEventImage, [])
-
-  const statusLabel: Record<string, string> = {
-    active: 'Activo',
-    presale: 'Preventa',
-    sold_out: 'Agotado',
-    cancelled: 'Cancelado',
-  }
-
-  const showStatus = event.status === 'sold_out' || event.status === 'cancelled' || event.status === 'presale'
+  const badge = getBadge(event)
 
   return (
     <Link to={`/events/${event.id}`} className="event-card">
@@ -30,9 +45,9 @@ export default function EventCard({ event }: EventCardProps) {
         {event.category && (
           <span className="event-card__category-badge">{event.category}</span>
         )}
-        {showStatus && (
-          <span className={`event-card__status-badge event-card__status-badge--${event.status}`}>
-            {statusLabel[event.status]}
+        {badge && (
+          <span className={`event-card__status-badge event-card__status-badge--${badge.key}`}>
+            {badge.label}
           </span>
         )}
       </div>

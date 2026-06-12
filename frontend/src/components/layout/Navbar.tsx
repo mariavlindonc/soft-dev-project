@@ -6,7 +6,10 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar__logo">Ceibo</Link>
+      <Link to="/" className="navbar__logo">
+        <img src="/icon.png" alt="" className="navbar__logo-img" />
+        Ceibo
+      </Link>
 
       <div className="navbar__primary-links">
         <Link to="/events">Eventos</Link>

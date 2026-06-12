@@ -52,10 +52,7 @@ func NewEmailClient() EmailClient {
 	}
 }
 
-// ---------------------------------------------------------------------------
 // Log client (development / fallback)
-// ---------------------------------------------------------------------------
-
 type logEmailClient struct{}
 
 func (c *logEmailClient) SendPurchaseConfirmation(to string, ticket TicketInfo) error {
@@ -73,10 +70,7 @@ func (c *logEmailClient) SendTransferNotice(from, to string, ticket TicketInfo) 
 	return nil
 }
 
-// ---------------------------------------------------------------------------
 // SMTP client (production)
-// ---------------------------------------------------------------------------
-
 type smtpEmailClient struct {
 	host     string
 	port     string

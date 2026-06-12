@@ -69,6 +69,12 @@ img { display: block; max-width: 100%; }
   text-decoration: none;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar__logo-img {
+  height: 28px;
+  width: auto;
 }
 
 .navbar__primary-links {
@@ -501,6 +507,11 @@ img { display: block; max-width: 100%; }
   color: var(--white);
 }
 
+.event-card__status-badge--upcoming {
+  background: #2c7be5;
+  color: var(--white);
+}
+
 .event-card.skeleton .event-card__image-wrapper {
   background: var(--beige);
   animation: pulse 1.5s infinite;
@@ -849,13 +860,12 @@ img { display: block; max-width: 100%; }
 
 .events-filters {
   display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.5rem;
   margin-bottom: 2rem;
 }
 
-.events-filters input,
-.events-filters select {
+.events-filters > input {
   padding: 0.5rem 0.75rem;
   border: 1.5px solid #d0d0d0;
   border-radius: 8px;
@@ -867,14 +877,56 @@ img { display: block; max-width: 100%; }
   transition: border-color 0.2s;
 }
 
-.events-filters input:focus,
-.events-filters select:focus {
+.events-filters > input:focus {
   border-color: var(--black);
 }
 
-.events-filters input {
-  flex: 1;
-  min-width: 200px;
+.events-filters-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.filter-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.filter-label span {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-label input,
+.filter-label select {
+  padding: 0.35rem 0.6rem;
+  border: 1.5px solid #d0d0d0;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--black);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  height: 34px;
+}
+
+.filter-label input:focus,
+.filter-label select:focus {
+  border-color: var(--black);
+}
+
+.filter-label input {
+  min-width: 130px;
+}
+
+.filter-label select {
+  min-width: 130px;
 }
 
 .events-count {

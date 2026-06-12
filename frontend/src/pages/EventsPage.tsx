@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEvents } from '../hooks/useEvents'
 import EventCard from '../components/events/EventCard'
+import type { Event } from '../types'
 
 const CATEGORIES = [
   { value: 'aire libre', label: 'Aire Libre' },
@@ -10,6 +11,21 @@ const CATEGORIES = [
   { value: 'teatro', label: 'Teatro' },
   { value: 'gastronomia', label: 'Gastronomía' },
 ]
+
+const SALE_PHASES = [
+  { value: 'presale', label: 'Preventa' },
+  { value: 'public', label: 'Venta general' },
+]
+
+function getSalePhase(event: Event): 'presale' | 'public' {
+  if (event.presale_active && event.presale_start_date && new Date(event.presale_start_date) <= new Date()) {
+    if (event.general_sale_date && new Date(event.general_sale_date) <= new Date()) {
+      return 'public'
+    }
+    return 'presale'
+  }
+  return 'public'
+}
 
 export default function EventsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -22,6 +38,7 @@ export default function EventsPage() {
   const [category, setCategory] = useState(initialCategory ?? '')
   const [debouncedSearch, setDebouncedSearch] = useState(search)
 
+  const [salePhase, setSalePhase] = useState('')
   const [dateFrom, setDateFrom] = useState(searchParams.get('date_from') ?? '')
   const [dateTo, setDateTo] = useState(searchParams.get('date_to') ?? '')
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') ?? '')
@@ -42,6 +59,7 @@ export default function EventsPage() {
     const params: Record<string, string> = {}
     if (debouncedSearch) params.q = debouncedSearch
     if (category) params.category = category
+    if (salePhase) params.phase = salePhase
     if (dateFrom) params.date_from = dateFrom
     if (dateTo) params.date_to = dateTo
     if (minPrice) params.min_price = minPrice
@@ -55,11 +73,12 @@ export default function EventsPage() {
     if (minPrice) filters.min_price = Number(minPrice)
     if (maxPrice) filters.max_price = Number(maxPrice)
     updateFilters(filters as Parameters<typeof updateFilters>[0])
-  }, [debouncedSearch, category, dateFrom, dateTo, minPrice, maxPrice, setSearchParams, updateFilters])
+  }, [debouncedSearch, category, salePhase, dateFrom, dateTo, minPrice, maxPrice, setSearchParams, updateFilters])
 
   const filtered = events.filter((e) => {
     const matchesCategory = !category || e.category === category
-    if (!debouncedSearch && !dateFrom && !dateTo && !minPrice && !maxPrice) return matchesCategory
+    const matchesSalePhase = !salePhase || getSalePhase(e) === salePhase
+    if (!debouncedSearch && !dateFrom && !dateTo && !minPrice && !maxPrice && !salePhase) return matchesCategory
 
     const q = debouncedSearch.toLowerCase()
     const matchesSearch =
@@ -75,7 +94,7 @@ export default function EventsPage() {
     const matchesPriceMin = !minPrice || e.price >= Number(minPrice)
     const matchesPriceMax = !maxPrice || e.price <= Number(maxPrice)
 
-    return matchesCategory && matchesSearch && matchesDateFrom && matchesDateTo && matchesPriceMin && matchesPriceMax
+    return matchesCategory && matchesSalePhase && matchesSearch && matchesDateFrom && matchesDateTo && matchesPriceMin && matchesPriceMax
   })
 
   return (
@@ -91,39 +110,61 @@ export default function EventsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select value={category} onChange={(e) => setCategory(e.target.value)}>
-          <option value="">Todas las categorías</option>
-          {CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>{c.label}</option>
-          ))}
-        </select>
         <div className="events-filters-row">
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            title="Desde fecha"
-          />
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            title="Hasta fecha"
-          />
-          <input
-            type="number"
-            placeholder="Precio min."
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            min="0"
-          />
-          <input
-            type="number"
-            placeholder="Precio máx."
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            min="0"
-          />
+          <label className="filter-label">
+            <span>Categoría</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">Todas</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="filter-label">
+            <span>Fase</span>
+            <select value={salePhase} onChange={(e) => setSalePhase(e.target.value)}>
+              <option value="">Todas</option>
+              {SALE_PHASES.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="filter-label">
+            <span>Desde</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+            />
+          </label>
+          <label className="filter-label">
+            <span>Hasta</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
+          </label>
+          <label className="filter-label">
+            <span>Precio min.</span>
+            <input
+              type="number"
+              placeholder="$0"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+              min="0"
+            />
+          </label>
+          <label className="filter-label">
+            <span>Precio máx.</span>
+            <input
+              type="number"
+              placeholder="$9999"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+              min="0"
+            />
+          </label>
         </div>
       </div>
 

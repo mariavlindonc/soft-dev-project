@@ -1,12 +1,16 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import type { Event } from '../../types'
 import { formatDateTime, formatPrice } from '../../utils/format'
+import { getRandomEventImage } from '../../data/eventImages'
 
 interface EventCardProps {
   event: Event
 }
 
 export default function EventCard({ event }: EventCardProps) {
+  const image = useMemo(getRandomEventImage, [])
+
   const statusLabel: Record<string, string> = {
     active: 'Activo',
     presale: 'Preventa',
@@ -21,7 +25,7 @@ export default function EventCard({ event }: EventCardProps) {
       <div className="event-card__image-wrapper">
         <div
           className="event-card__image"
-          style={{ backgroundImage: event.image_url ? `url(${event.image_url})` : undefined }}
+          style={{ backgroundImage: `url(${image})` }}
         />
         {event.category && (
           <span className="event-card__category-badge">{event.category}</span>

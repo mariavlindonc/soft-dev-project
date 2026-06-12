@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import type { Event, SaleStatus } from '../types'
 import { getEventById, getSaleStatus } from '../api/events'
@@ -6,6 +6,7 @@ import { purchaseTicket } from '../api/tickets'
 import { mockEvents } from '../data/mockEvents'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime, formatPrice } from '../utils/format'
+import { getRandomEventImage } from '../data/eventImages'
 import PaymentModal from '../components/payment/PaymentModal'
 
 function computeSaleStatus(event: Event): SaleStatus {
@@ -78,6 +79,7 @@ export default function EventDetailPage() {
   const isPresaleCodeRequired =
     saleStatus?.phase === 'presale' && saleStatus.message.toLowerCase().includes('code')
 
+  const eventImage = useMemo(getRandomEventImage, [])
   const available = event ? event.capacity - event.tickets_sold : 0
 
   async function handlePurchase() {
@@ -161,7 +163,7 @@ export default function EventDetailPage() {
         <div className="event-detail">
           <div
             className="event-detail-image"
-            style={{ backgroundImage: event.image_url ? `url(${event.image_url})` : undefined }}
+            style={{ backgroundImage: `url(${eventImage})` }}
           />
 
           <div className="event-detail-info">

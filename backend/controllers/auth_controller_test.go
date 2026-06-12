@@ -30,6 +30,7 @@ func TestRegister(t *testing.T) {
 		mockSvc.On("Register", mock.MatchedBy(func(input services.RegisterInput) bool {
 			return input.Email == "a@test.com"
 		})).Return(&domain.User{ID: 1, Name: "Alice", Email: "a@test.com", Role: "client"}, nil)
+		mockSvc.On("GenerateToken", uint(1), "client").Return("jwt-token-123", nil)
 
 		r := setupRouter()
 		r.POST("/register", ctrl.Register)
@@ -44,8 +45,8 @@ func TestRegister(t *testing.T) {
 		var resp registerResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		assert.Equal(t, uint(1), resp.ID)
-		assert.Equal(t, "Alice", resp.Name)
+		assert.Equal(t, uint(1), resp.User.ID)
+		assert.Equal(t, "Alice", resp.User.Name)
 	})
 
 	t.Run("missing fields returns 400", func(t *testing.T) {
@@ -89,7 +90,7 @@ func TestLogin(t *testing.T) {
 		mockSvc.On("Login", services.LoginInput{
 			Email:    "a@test.com",
 			Password: "correct",
-		}).Return("jwt-token-123", nil)
+		}).Return("jwt-token-123", &domain.User{ID: 1, Name: "Alice", Email: "a@test.com", Role: "client"}, nil)
 
 		r := setupRouter()
 		r.POST("/login", ctrl.Login)
@@ -111,7 +112,7 @@ func TestLogin(t *testing.T) {
 		mockSvc := new(MockAuthService)
 		ctrl := NewAuthController(mockSvc)
 
-		mockSvc.On("Login", mock.Anything).Return("", errors.New("unauthorized"))
+		mockSvc.On("Login", mock.Anything).Return("", nil, errors.New("unauthorized"))
 
 		r := setupRouter()
 		r.POST("/login", ctrl.Login)

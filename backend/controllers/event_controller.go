@@ -288,8 +288,14 @@ func salePhaseMessage(phase domain.SalePhase, presaleStart, generalSale *time.Ti
 		}
 		return "Sales have not opened yet."
 	case domain.PhasePresale:
+		if generalSale != nil {
+			return fmt.Sprintf("Pre-sale is active. General sale starts on %s. An access code is required.", generalSale.Format("2006-01-02 15:04"))
+		}
 		return "Pre-sale is currently active. An access code is required to purchase tickets."
 	case domain.PhasePublic:
+		if generalSale != nil {
+			return fmt.Sprintf("General sale started on %s. No access code required.", generalSale.Format("2006-01-02 15:04"))
+		}
 		return "General sale is open. No access code is required."
 	case domain.PhaseNoPresale:
 		return "Tickets are available for purchase."

@@ -82,7 +82,7 @@ func TestLogin(t *testing.T) {
 			PasswordHash: hash,
 		}, nil)
 
-		token, err := svc.Login(LoginInput{Email: "a@test.com", Password: "myPassword"})
+		token, _, err := svc.Login(LoginInput{Email: "a@test.com", Password: "myPassword"})
 		require.NoError(t, err)
 		assert.NotEmpty(t, token)
 		userDAO.AssertExpectations(t)
@@ -97,7 +97,7 @@ func TestLogin(t *testing.T) {
 			PasswordHash: hash,
 		}, nil)
 
-		_, err := svc.Login(LoginInput{Email: "u@test.com", Password: "wrongPassword"})
+		_, _, err := svc.Login(LoginInput{Email: "u@test.com", Password: "wrongPassword"})
 		assert.ErrorIs(t, err, ErrUnauthorized)
 	})
 
@@ -107,7 +107,7 @@ func TestLogin(t *testing.T) {
 
 		userDAO.On("FindByEmail", "no@test.com").Return(nil, errors.New("not found"))
 
-		_, err := svc.Login(LoginInput{Email: "no@test.com", Password: "any"})
+		_, _, err := svc.Login(LoginInput{Email: "no@test.com", Password: "any"})
 		assert.ErrorIs(t, err, ErrUnauthorized)
 	})
 }

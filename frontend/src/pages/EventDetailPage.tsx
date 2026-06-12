@@ -49,23 +49,28 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (!id) return
     const numId = Number(id)
-    setLoading(true)
-    setError(null)
+    let cancelled = false
     Promise.all([getEventById(numId), getSaleStatus(numId)])
       .then(([ev, sale]) => {
-        setEvent(ev)
-        setSaleStatus(sale)
-      })
-      .catch(() => {
-        const mock = mockEvents.find((e) => e.id === numId)
-        if (mock) {
-          setEvent(mock)
-          setSaleStatus(computeSaleStatus(mock))
-        } else {
-          setError('Evento no encontrado')
+        if (!cancelled) {
+          setEvent(ev)
+          setSaleStatus(sale)
+          setLoading(false)
         }
       })
-      .finally(() => setLoading(false))
+      .catch(() => {
+        if (!cancelled) {
+          const mock = mockEvents.find((e) => e.id === numId)
+          if (mock) {
+            setEvent(mock)
+            setSaleStatus(computeSaleStatus(mock))
+          } else {
+            setError('Evento no encontrado')
+          }
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
   }, [id])
 
   const isPresaleCodeRequired =

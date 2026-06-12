@@ -7,7 +7,25 @@ export function useTickets() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchTickets = useCallback(async () => {
+  useEffect(() => {
+    let cancelled = false
+    ticketsApi.getMyTickets()
+      .then((data) => {
+        if (!cancelled) {
+          setTickets(data)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Error al cargar tus entradas')
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  const refetch = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -19,10 +37,6 @@ export function useTickets() {
       setLoading(false)
     }
   }, [])
-
-  useEffect(() => {
-    fetchTickets()
-  }, [fetchTickets])
 
   const cancelTicket = useCallback(async (id: number) => {
     try {
@@ -52,5 +66,5 @@ export function useTickets() {
     }
   }, [])
 
-  return { tickets, loading, error, refetch: fetchTickets, cancelTicket, transferTicket }
+  return { tickets, loading, error, refetch, cancelTicket, transferTicket }
 }

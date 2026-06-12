@@ -9,7 +9,25 @@ export function useEvents(initialFilters?: EventFilters) {
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<EventFilters | undefined>(initialFilters)
 
-  const fetchEvents = useCallback(async (f?: EventFilters) => {
+  useEffect(() => {
+    let cancelled = false
+    getEvents(filters)
+      .then((data) => {
+        if (!cancelled) {
+          setEvents(data)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setEvents(mockEvents)
+          setLoading(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [filters])
+
+  const refetch = useCallback(async (f?: EventFilters) => {
     setLoading(true)
     setError(null)
     try {
@@ -22,10 +40,6 @@ export function useEvents(initialFilters?: EventFilters) {
     }
   }, [])
 
-  useEffect(() => {
-    fetchEvents(filters)
-  }, [filters, fetchEvents])
-
   const updateFilters = useCallback((newFilters: EventFilters) => {
     setFilters(newFilters)
   }, [])
@@ -34,5 +48,5 @@ export function useEvents(initialFilters?: EventFilters) {
     setFilters(undefined)
   }, [])
 
-  return { events, loading, error, filters, updateFilters, clearFilters, refetch: fetchEvents }
+  return { events, loading, error, filters, updateFilters, clearFilters, refetch }
 }

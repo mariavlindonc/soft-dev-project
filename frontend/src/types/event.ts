@@ -25,6 +25,8 @@ export interface EventFilters {
   category?: string
   date_from?: string
   date_to?: string
+  min_price?: number
+  max_price?: number
 }
 
 export interface SaleStatus {

@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom'
 const CATEGORIES = [
   { name: 'Aire Libre', icon: '🌳', slug: 'aire libre' },
   { name: 'En Salón', icon: '🏛️', slug: 'en salon' },
-  { name: 'Grupos Emergentes', icon: '🌟', slug: 'grupos emergentes' },
+  { name: 'Música', icon: '🎵', slug: 'musica' },
+  { name: 'Teatro', icon: '🎭', slug: 'teatro' },
+  { name: 'Gastronomía', icon: '🍽️', slug: 'gastronomia' },
 ]
 
 export default function Categories() {

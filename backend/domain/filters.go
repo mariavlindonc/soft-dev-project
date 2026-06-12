@@ -9,4 +9,6 @@ type EventFilters struct {
 	Category string
 	DateFrom *time.Time
 	DateTo   *time.Time
+	MinPrice *float64
+	MaxPrice *float64
 }

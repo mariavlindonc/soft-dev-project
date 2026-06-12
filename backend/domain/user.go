@@ -12,7 +12,7 @@ type User struct {
 	Email        string         `gorm:"type:varchar(255);not null;uniqueIndex:uq_users_email" json:"email"`
 	PasswordHash string         `gorm:"type:varchar(255);not null" json:"-"`
 	Role         string         `gorm:"type:enum('client','admin');not null;default:'client'" json:"role"`
-	CreatedAt    time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt    time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP;autoUpdateTime" json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index:idx_users_deleted_at" json:"deleted_at,omitempty"`
+	CreatedAt    time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt    time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP;autoUpdateTime" json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"type:datetime;index:idx_users_deleted_at" json:"deleted_at,omitempty"`
 }

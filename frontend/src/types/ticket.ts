@@ -11,6 +11,7 @@ export interface Ticket {
 
 export interface PurchaseRequest {
   event_id: number
+  quantity: number
   presale_code?: string
 }
 

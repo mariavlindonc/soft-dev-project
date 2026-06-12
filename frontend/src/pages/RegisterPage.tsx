@@ -25,7 +25,7 @@ export default function RegisterPage() {
     if (!email.trim()) errs.email = 'El correo es obligatorio'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Correo inválido'
     if (!password) errs.password = 'La contraseña es obligatoria'
-    else if (password.length < 6) errs.password = 'Mínimo 6 caracteres'
+    else if (password.length < 8) errs.password = 'Mínimo 8 caracteres'
     if (password !== confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden'
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               className={fieldErrors.password ? 'input-error' : ''}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               autoComplete="new-password"
             />
             {fieldErrors.password && <p className="form-error">{fieldErrors.password}</p>}

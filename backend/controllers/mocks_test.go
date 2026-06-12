@@ -76,12 +76,12 @@ type MockTicketService struct {
 	mock.Mock
 }
 
-func (m *MockTicketService) Purchase(userID uint, input services.PurchaseInput) (*domain.Ticket, error) {
+func (m *MockTicketService) Purchase(userID uint, input services.PurchaseInput) ([]*domain.Ticket, error) {
 	args := m.Called(userID, input)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Ticket), args.Error(1)
+	return args.Get(0).([]*domain.Ticket), args.Error(1)
 }
 
 func (m *MockTicketService) GetByUser(userID uint) ([]domain.Ticket, error) {

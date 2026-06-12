@@ -31,28 +31,28 @@ func TestPurchaseTicket(t *testing.T) {
 		ctrl := NewTicketController(mockSvc)
 
 		mockSvc.On("Purchase", uint(10), services.PurchaseInput{
-			EventID: 1, PresaleCode: "",
-		}).Return(&domain.Ticket{
-			ID: 1, UserID: 10, EventID: 1,
-			Status: "active", PurchasePrice: 50,
-			PurchasedAt: time.Now(),
+			EventID: 1, Quantity: 2, PresaleCode: "",
+		}).Return([]*domain.Ticket{
+			{ID: 1, UserID: 10, EventID: 1, Status: "active", PurchasePrice: 50, PurchasedAt: time.Now()},
+			{ID: 2, UserID: 10, EventID: 1, Status: "active", PurchasePrice: 50, PurchasedAt: time.Now()},
 		}, nil)
 
 		r := setupRouter()
 		r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
 
-		body := `{"event_id":1}`
+		body := `{"event_id":1,"quantity":2}`
 		req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 
 		require.Equal(t, http.StatusCreated, w.Code)
-		var resp ticketResponse
+		var resp []ticketResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
-		assert.Equal(t, uint(1), resp.ID)
-		assert.Equal(t, "active", resp.Status)
+		require.Len(t, resp, 2)
+		assert.Equal(t, uint(1), resp[0].ID)
+		assert.Equal(t, "active", resp[0].Status)
 	})
 
 	t.Run("cancelled event returns 400", func(t *testing.T) {
@@ -64,7 +64,7 @@ func TestPurchaseTicket(t *testing.T) {
 		r := setupRouter()
 		r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
 
-		body := `{"event_id":1}`
+		body := `{"event_id":1,"quantity":1}`
 		req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()

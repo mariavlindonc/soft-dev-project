@@ -6,6 +6,7 @@ import { purchaseTicket } from '../api/tickets'
 import { mockEvents } from '../data/mockEvents'
 import { useAuth } from '../context/AuthContext'
 import { formatDateTime, formatPrice } from '../utils/format'
+import PaymentModal from '../components/payment/PaymentModal'
 
 function computeSaleStatus(event: Event): SaleStatus {
   if (event.status === 'cancelled') {
@@ -40,6 +41,7 @@ export default function EventDetailPage() {
   const [purchasing, setPurchasing] = useState(false)
   const [purchaseError, setPurchaseError] = useState<string | null>(null)
   const [purchased, setPurchased] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   const [authName, setAuthName] = useState('')
   const [authEmail, setAuthEmail] = useState('')
@@ -95,24 +97,20 @@ export default function EventDetailPage() {
         setPurchasing(false)
         return
       }
-    }
-
-    setPurchasing(true)
-    try {
-      await purchaseTicket({
-        event_id: event.id,
-        presale_code: isPresaleCodeRequired ? presaleCode : undefined,
-      })
-      setPurchased(true)
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response: { data: { error: string } } }).response?.data?.error
-          : 'Error al comprar la entrada'
-      setPurchaseError(msg ?? 'Error al comprar la entrada')
-    } finally {
       setPurchasing(false)
     }
+
+    setShowPaymentModal(true)
+  }
+
+  async function handlePaymentConfirm() {
+    if (!event) return
+    await purchaseTicket({
+      event_id: event.id,
+      quantity,
+      presale_code: isPresaleCodeRequired ? presaleCode : undefined,
+    })
+    setPurchased(true)
   }
 
   if (loading) {
@@ -288,6 +286,16 @@ export default function EventDetailPage() {
             )}
           </div>
         </div>
+      )}
+
+      {showPaymentModal && event && (
+        <PaymentModal
+          eventTitle={event.title}
+          quantity={quantity}
+          total={event.price * quantity}
+          onConfirm={handlePaymentConfirm}
+          onClose={() => setShowPaymentModal(false)}
+        />
       )}
     </div>
   )

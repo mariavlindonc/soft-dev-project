@@ -1,23 +1,25 @@
 USE ceibo_db;
 
 -- Admin users (FK reference for events.created_by_id)
+-- NOTA: Todos los usuarios tienen contraseña "admin2026"
+-- NOTA: Todos los usuarios tienen contraseña "admin2026"
 INSERT INTO users (name, email, password_hash, role) VALUES
-    ('Carlos Méndez',  'carlos@ceibo.com',   '$2a$10$longhashplaceholder1', 'admin'),
-    ('Ana Lucía Rivas', 'ana@ceibo.com',      '$2a$10$longhashplaceholder2', 'admin'),
-    ('Pedro Castillo',  'pedro@ceibo.com',    '$2a$10$longhashplaceholder3', 'admin');
+    ('Carlos Méndez',   'carlos@ceibo.com',    '$2a$12$zoq4MCjB.LumV0PZirWwZekE1Ubrn7kT3yqZtSfwXVPbKzqoVbDkW', 'admin'),
+    ('Ana Lucía Rivas', 'ana@ceibo.com',       '$2a$12$i/xR0EWWrkuhHYI3H1c9ru.Yko1dbRLBd9AQZkq93h7y.K3Dwlw1m', 'admin'),
+    ('Pedro Castillo',  'pedro@ceibo.com',     '$2a$12$78j729GDULXZm./EZkGuIOyGdYTJfn6RiFF7XbrGucjrzYWi96Fz6', 'admin');
 
 -- Client users
 INSERT INTO users (name, email, password_hash, role) VALUES
-    ('Sofía Martínez',  'sofia@gmail.com',     '$2a$10$longhashplaceholder4', 'client'),
-    ('Lautaro Gómez',   'lautaro@hotmail.com', '$2a$10$longhashplaceholder5', 'client'),
-    ('Camila Rodríguez','camila@yahoo.com',    '$2a$10$longhashplaceholder6', 'client'),
-    ('Facundo Díaz',    'facundo@gmail.com',   '$2a$10$longhashplaceholder7', 'client'),
-    ('Lucía Fernández', 'lucia@outlook.com',   '$2a$10$longhashplaceholder8', 'client'),
-    ('Mateo Álvarez',   'mateo@gmail.com',     '$2a$10$longhashplaceholder9', 'client'),
-    ('Valentina Torres','valentina@live.com',  '$2a$10$longhashplaceholder10', 'client'),
-    ('Santiago López',  'santiago@gmail.com',  '$2a$10$longhashplaceholder11', 'client'),
-    ('Florencia Acosta','florencia@yahoo.com', '$2a$10$longhashplaceholder12', 'client'),
-    ('Agustín Pereyra', 'agustin@gmail.com',   '$2a$10$longhashplaceholder13', 'client');
+    ('Sofía Martínez',  'sofia@gmail.com',     '$2a$12$JQGtUyyrxOj/stBk6Y7ozuPThRhK3/EzECAnarFijlnqFEiiVKGCW', 'client'),
+    ('Lautaro Gómez',   'lautaro@hotmail.com', '$2a$12$87cbCsZFFZ4jr6bkMPe6Hu.NrPFhHgEqLXRmqpklgN3Yz1Hmss/Gy', 'client'),
+    ('Camila Rodríguez','camila@yahoo.com',    '$2a$12$6e9SlcgpZHWZBa4llnh6WuvaUliGvoocEh7TLTKPfJrhOqbG8Erye', 'client'),
+    ('Facundo Díaz',    'facundo@gmail.com',   '$2a$12$FE8VISbR5o8O0CA80iIXXej0ZNurMp6agUEsqYlWexJivYXC26bQa', 'client'),
+    ('Lucía Fernández', 'lucia@outlook.com',   '$2a$12$Hw8XYWwtAzbBYXZUPQvsHeSQ4qPysb332YWL2kQIfi75EdPbjKDFK', 'client'),
+    ('Mateo Álvarez',   'mateo@gmail.com',     '$2a$12$NRzF8BhcYGpIQShFYKQLCOzxZQytD8DCHJuBIbvcXkZ5mYz30oi8u', 'client'),
+    ('Valentina Torres','valentina@live.com',  '$2a$12$LpDamOk0QCAzGIo3wRb3Ve3OTMvXj/8gKDZjwJoAr0PDmTs8FeNiu', 'client'),
+    ('Santiago López',  'santiago@gmail.com',  '$2a$12$DINro2QiF5JcurvoOkBtkunbhnHSJuxb873SpU1S6a4k6RJmPOCxi', 'client'),
+    ('Florencia Acosta','florencia@yahoo.com', '$2a$12$5ZbK2tFZNs3h46vEIj5lUe1pNqFuZb.KQZNME4/lxIPcoK7.K.V6m', 'client'),
+    ('Agustín Pereyra', 'agustin@gmail.com',   '$2a$12$B0fVQztvKrzL1MMs0aDS2eSE0PasmoiES883zP24B.xOwnVvFEM2a', 'client');
 
 -- Events (20)
 INSERT INTO events (title, description, image_url, category, location, event_date, duration_minutes, capacity, tickets_sold, price, status, presale_active, presale_code, presale_start_date, general_sale_date, created_by_id)

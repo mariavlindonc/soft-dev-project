@@ -67,8 +67,8 @@ func (m *MockEventDAO) Delete(id uint) error {
 	return args.Error(0)
 }
 
-func (m *MockEventDAO) IncrementTicketsSold(eventID uint) error {
-	args := m.Called(eventID)
+func (m *MockEventDAO) IncrementTicketsSold(eventID uint, delta int) error {
+	args := m.Called(eventID, delta)
 	return args.Error(0)
 }
 

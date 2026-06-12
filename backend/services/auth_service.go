@@ -1,11 +1,14 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 
 	db "backend/dao"
 	"backend/domain"
 	"backend/utils"
+
+	"gorm.io/gorm"
 )
 
 // ---------------------------------------------------------------------------
@@ -51,7 +54,7 @@ func (s *AuthService) Register(input RegisterInput) (*domain.User, error) {
 	}
 
 	existing, err := s.userDAO.FindByEmail(input.Email)
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("checking existing user: %w", err)
 	}
 	if existing != nil {

@@ -26,8 +26,6 @@ logger/         # Logger estructurado JSON
 services/       # Logica de negocio + tests
 ```
 
-Ver [docs/architecture.md](../docs/architecture.md) para detalle de diseno y patrones.
-
 ## Comandos utiles
 
 ```bash
@@ -42,12 +40,3 @@ go build -o bin/server .    # compilar binario
 - Los services contienen la logica de negocio y errores sentinela
 - Los DAOs se definen como interfaces para poder mockear en tests
 - Las transacciones se manejan a nivel de service con `WithTransaction`
-
-## Documentacion relacionada
-
-| Que buscas? | Donde? |
-|-------------|--------|
-| Endpoints y ejemplos | [API Reference](../docs/api-reference.md) |
-| Modelo de datos | [Base de Datos](../docs/database.md) |
-| Patrones de diseno | [Arquitectura](../docs/architecture.md) |
-| Tests y cobertura | [Testing](../docs/testing.md) |

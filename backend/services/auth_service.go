@@ -14,7 +14,8 @@ import (
 
 type AuthServiceInterface interface {
 	Register(input RegisterInput) (*domain.User, error)
-	Login(input LoginInput) (string, error)
+	Login(input LoginInput) (string, *domain.User, error)
+	GenerateToken(userID uint, role string) (string, error)
 }
 
 // ---------------------------------------------------------------------------
@@ -76,22 +77,26 @@ func (s *AuthService) Register(input RegisterInput) (*domain.User, error) {
 	return user, nil
 }
 
-func (s *AuthService) Login(input LoginInput) (string, error) {
+func (s *AuthService) Login(input LoginInput) (string, *domain.User, error) {
 	user, err := s.userDAO.FindByEmail(input.Email)
 	if err != nil {
-		return "", ErrUnauthorized
+		return "", nil, ErrUnauthorized
 	}
 
 	if !utils.CheckPassword(input.Password, user.PasswordHash) {
-		return "", ErrUnauthorized
+		return "", nil, ErrUnauthorized
 	}
 
 	token, err := utils.GenerateJWT(user.ID, user.Role)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate token: %w", err)
+		return "", nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	return token, nil
+	return token, user, nil
+}
+
+func (s *AuthService) GenerateToken(userID uint, role string) (string, error) {
+	return utils.GenerateJWT(userID, role)
 }
 
 // Compile-time interface check.

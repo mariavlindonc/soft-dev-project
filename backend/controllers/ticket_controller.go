@@ -36,9 +36,18 @@ type ticketResponse struct {
 	Status        string  `json:"status"`
 	PurchasePrice float64 `json:"purchase_price"`
 	PurchasedAt   string  `json:"purchased_at"`
+	EventTitle    string  `json:"event_title"`
+	EventDate     string  `json:"event_date"`
 }
 
 func toTicketResponse(t *domain.Ticket) ticketResponse {
+	eventTitle := ""
+	eventDate := ""
+	if t.Event.Title != "" {
+		eventTitle = t.Event.Title
+		eventDate = t.Event.EventDate.Format(time.RFC3339)
+	}
+
 	return ticketResponse{
 		ID:            t.ID,
 		UserID:        t.UserID,
@@ -46,6 +55,8 @@ func toTicketResponse(t *domain.Ticket) ticketResponse {
 		Status:        t.Status,
 		PurchasePrice: t.PurchasePrice,
 		PurchasedAt:   t.PurchasedAt.Format(time.RFC3339),
+		EventTitle:    eventTitle,
+		EventDate:     eventDate,
 	}
 }
 

@@ -22,7 +22,7 @@ type Event struct {
 	ImageURL         *string        `gorm:"type:varchar(500)" json:"image_url,omitempty"`
 	Category         *string        `gorm:"type:varchar(100);index:idx_events_category" json:"category,omitempty"`
 	Location         *string        `gorm:"type:varchar(300)" json:"location,omitempty"`
-	EventDate        time.Time      `gorm:"not null;index:idx_events_event_date;index:idx_events_status_date,priority:2" json:"event_date"`
+	EventDate        time.Time      `gorm:"type:datetime;not null;index:idx_events_event_date;index:idx_events_status_date,priority:2" json:"event_date"`
 	DurationMinutes  int            `gorm:"not null;default:0" json:"duration_minutes"`
 	Capacity         int            `gorm:"not null;default:0" json:"capacity"`
 	TicketsSold      int            `gorm:"not null;default:0" json:"tickets_sold"`
@@ -33,8 +33,8 @@ type Event struct {
 	PresaleStartDate *time.Time    `gorm:"type:datetime" json:"presale_start_date,omitempty"`
 	GeneralSaleDate  *time.Time    `gorm:"type:datetime" json:"general_sale_date,omitempty"`
 	CreatedByID      uint           `gorm:"type:int unsigned;not null;index:idx_events_created_by" json:"created_by_id"`
-	CreatedAt        time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt        time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP;autoUpdateTime" json:"updated_at"`
+	CreatedAt        time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt        time.Time      `gorm:"type:datetime;not null;default:CURRENT_TIMESTAMP;autoUpdateTime" json:"updated_at"`
 	DeletedAt        gorm.DeletedAt `gorm:"index:idx_events_deleted_at" json:"deleted_at,omitempty"`
 
 	CreatedBy User `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"created_by"`

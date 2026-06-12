@@ -144,7 +144,7 @@ export default function TicketsPage() {
               <label htmlFor="transferEmail">Correo del destinatario</label>
               <input
                 id="transferEmail"
-                type="email"
+                type="text"
                 value={transferEmail}
                 onChange={(e) => setTransferEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"

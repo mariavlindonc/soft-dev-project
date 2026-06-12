@@ -1,3 +1,7 @@
+-- Full reset of database for development/testing purposes.
+DROP DATABASE IF EXISTS ceibo_db;
+
+-- Creation of database
 CREATE DATABASE IF NOT EXISTS ceibo_db
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;

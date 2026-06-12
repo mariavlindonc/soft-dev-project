@@ -18,5 +18,6 @@ export function formatDateTime(dateStr: string): string {
 }
 
 export function formatPrice(price: number): string {
-  return price === 0 ? 'Gratis' : `$${price.toFixed(2)}`
+  if (price === 0) return 'Gratis'
+  return '$ ' + price.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }

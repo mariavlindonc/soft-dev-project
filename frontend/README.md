@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# Ceibo Tickets — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SPA para la gestion de eventos y venta de entradas. Consume la API REST del backend.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+React 19 + TypeScript 6 + Vite 8 + React Router DOM v7 + Axios
 
-## React Compiler
+## Inicio rapido
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev       # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Estructura
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```
+src/
+├── api/          # Cliente Axios con interceptors (JWT y errores)
+├── components/   # Componentes reutilizables (Layout, Navbar, EventCard, PaymentModal, etc.)
+├── context/      # AuthContext (estado global de autenticacion + localStorage)
+├── hooks/        # useEvents, useTickets (logica de negocio)
+├── pages/        # Vistas completas (Home, Events, EventDetail, Auth, Tickets, AdminPanel, static pages)
+├── types/        # Interfaces TypeScript (Event, Ticket, User, etc.)
+├── data/         # Datos mock para desarrollo sin backend
+└── utils/        # formatDate, formatPrice
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Paginas
+
+| Ruta | Vista |
+|------|-------|
+| `/` | Home |
+| `/events` | Listado de eventos con filtros |
+| `/events/:id` | Detalle de evento + compra |
+| `/login`, `/register` | Autenticacion |
+| `/tickets` | Mis Entradas (cancelar, transferir) |
+| `/admin/*` | Panel admin (CRUD eventos, reportes) |
+| `/faq`, `/terms`, `/privacy` | Paginas estaticas |
+
+## Comandos utiles
+
+```bash
+npm run dev       # desarrollo
+npm run build     # produccion
+npm run preview   # previsualizar build
+npm run lint      # ESLint
 ```

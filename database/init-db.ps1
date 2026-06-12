@@ -5,9 +5,9 @@ Get-Content ../backend/.env | ForEach-Object {
 }
 
 Write-Host "Creating schema..."
-cmd /c "mysql -h %DB_HOST% -P %DB_PORT% -u %DB_USER% -p%DB_PASSWORD% %DB_NAME% --ssl-ca=../backend/certs/ca.pem < schema.sql"
+cmd /c "mysql -h %DB_HOST% -P %DB_PORT% -u %DB_USER% -p%DB_PASSWORD% %DB_NAME% --ssl-ca=../backend/certs/ca.pem --default-character-set=utf8mb4 < schema.sql"
 
 Write-Host "Seeding data..."
-cmd /c "mysql -h %DB_HOST% -P %DB_PORT% -u %DB_USER% -p%DB_PASSWORD% %DB_NAME% --ssl-ca=../backend/certs/ca.pem < data.sql"
+cmd /c "mysql -h %DB_HOST% -P %DB_PORT% -u %DB_USER% -p%DB_PASSWORD% %DB_NAME% --ssl-ca=../backend/certs/ca.pem --default-character-set=utf8mb4 < data.sql"
 
 Write-Host "Database initialized!"

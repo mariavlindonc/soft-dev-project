@@ -1,12 +1,15 @@
 package db
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"os"
 	"time"
 
 	"backend/logger"
 
+	sqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -33,14 +36,26 @@ func NewDatabase() (*Database, error) {
 	pass := getEnvOrDefault("DB_PASSWORD", "")
 	name := getEnvOrDefault("DB_NAME", "ceibo_db")
 
+	// Configure TLS for MySQL if CA cert is provided
+	caPath := os.Getenv("DB_SSL_CA")
+	if caPath != "" {
+		if err := configureMySQLTLS(caPath); err != nil {
+			return nil, fmt.Errorf("failed to configure mysql TLS: %w", err)
+		}
+	}
+
 	// Create database if it does not exist
-	if err := ensureDatabase(host, port, user, pass, name); err != nil {
+	if err := ensureDatabase(host, port, user, pass, name, caPath != ""); err != nil {
 		return nil, fmt.Errorf("failed to ensure database: %w", err)
 	}
 
 	// Connect with retry (handles Docker depends_on race condition)
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		user, pass, host, port, name)
+	tlsParam := "false"
+	if caPath != "" {
+		tlsParam = "custom"
+	}
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
+		user, pass, host, port, name, tlsParam)
 
 	var conn *gorm.DB
 	var lastErr error
@@ -90,9 +105,29 @@ func (d *Database) Close() error {
 	return sqlDB.Close()
 }
 
-func ensureDatabase(host, port, user, pass, name string) error {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local",
-		user, pass, host, port)
+func configureMySQLTLS(caPath string) error {
+	rootCertPool := x509.NewCertPool()
+	pem, err := os.ReadFile(caPath)
+	if err != nil {
+		return fmt.Errorf("failed to read CA cert: %w", err)
+	}
+	if !rootCertPool.AppendCertsFromPEM(pem) {
+		return fmt.Errorf("failed to parse CA cert")
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs: rootCertPool,
+	}
+	return sqlDriver.RegisterTLSConfig("custom", tlsConfig)
+}
+
+func ensureDatabase(host, port, user, pass, name string, useTLS bool) error {
+	tlsParam := "false"
+	if useTLS {
+		tlsParam = "custom"
+	}
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
+		user, pass, host, port, tlsParam)
 
 	tmpDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: gormLogger.Default.LogMode(gormLogger.Silent),

@@ -258,7 +258,7 @@ export default function EventDetailPage() {
                     )}
                     <div className="form-group">
                       <label htmlFor="authEmail">Email</label>
-                      <input id="authEmail" type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="correo@ejemplo.com" />
+                      <input id="authEmail" type="text" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} placeholder="correo@ejemplo.com" />
                     </div>
                     <div className="form-group">
                       <label htmlFor="authPassword">Contraseña</label>

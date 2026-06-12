@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"backend/services"
 
@@ -45,10 +46,21 @@ type loginResponse struct {
 	User  userResponse `json:"user"`
 }
 
+func userFriendlyError(err error) string {
+	msg := err.Error()
+	if strings.Contains(msg, "email is already registered") {
+		return "El correo electrónico ya está registrado"
+	}
+	if strings.Contains(msg, "password must be at least 8 characters") {
+		return "La contraseña debe tener al menos 8 caracteres"
+	}
+	return "Error interno del servidor. Intentá de nuevo."
+}
+
 func (h *AuthController) Register(c *gin.Context) {
 	var req registerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Verificá los datos ingresados"})
 		return
 	}
 
@@ -59,16 +71,16 @@ func (h *AuthController) Register(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidInput) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": userFriendlyError(err)})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": userFriendlyError(err)})
 		return
 	}
 
 	token, err := h.authService.GenerateToken(user.ID, user.Role)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "registration succeeded but token generation failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear la cuenta. Intentá de nuevo."})
 		return
 	}
 
@@ -86,7 +98,7 @@ func (h *AuthController) Register(c *gin.Context) {
 func (h *AuthController) Login(c *gin.Context) {
 	var req loginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Verificá los datos ingresados"})
 		return
 	}
 
@@ -95,7 +107,7 @@ func (h *AuthController) Login(c *gin.Context) {
 		Password: req.Password,
 	})
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Correo o contraseña incorrectos"})
 		return
 	}
 

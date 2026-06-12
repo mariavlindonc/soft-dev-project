@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	db "backend/dao"
 	"backend/domain"
@@ -49,6 +50,9 @@ func NewAuthService(userDAO db.UserDAO) *AuthService {
 }
 
 func (s *AuthService) Register(input RegisterInput) (*domain.User, error) {
+	input.Email = strings.TrimSpace(strings.ToLower(input.Email))
+	input.Name = strings.TrimSpace(input.Name)
+
 	if len(input.Password) < 8 {
 		return nil, fmt.Errorf("%w: password must be at least 8 characters", ErrInvalidInput)
 	}
@@ -81,6 +85,8 @@ func (s *AuthService) Register(input RegisterInput) (*domain.User, error) {
 }
 
 func (s *AuthService) Login(input LoginInput) (string, *domain.User, error) {
+	input.Email = strings.TrimSpace(strings.ToLower(input.Email))
+
 	user, err := s.userDAO.FindByEmail(input.Email)
 	if err != nil {
 		return "", nil, ErrUnauthorized

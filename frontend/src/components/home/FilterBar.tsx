@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 const CATEGORIES = [
   { label: 'Aire Libre', slug: 'aire libre' },
   { label: 'En Salón', slug: 'en salon' },
-  { label: 'Grupos Emergentes', slug: 'grupos emergentes' },
+  { label: 'Música', slug: 'musica' },
+  { label: 'Teatro', slug: 'teatro' },
+  { label: 'Gastronomía', slug: 'gastronomia' },
 ]
 
 export default function FilterBar() {

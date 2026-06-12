@@ -110,6 +110,28 @@ func (h *EventController) GetAll(c *gin.Context) {
 			filters.DateTo = &end
 		}
 	}
+	if dateFromStr := c.Query("date_from"); dateFromStr != "" {
+		parsed, err := time.Parse("2006-01-02", dateFromStr)
+		if err == nil {
+			filters.DateFrom = &parsed
+		}
+	}
+	if dateToStr := c.Query("date_to"); dateToStr != "" {
+		parsed, err := time.Parse("2006-01-02", dateToStr)
+		if err == nil {
+			filters.DateTo = &parsed
+		}
+	}
+	if minPriceStr := c.Query("min_price"); minPriceStr != "" {
+		if minPrice, err := strconv.ParseFloat(minPriceStr, 64); err == nil {
+			filters.MinPrice = &minPrice
+		}
+	}
+	if maxPriceStr := c.Query("max_price"); maxPriceStr != "" {
+		if maxPrice, err := strconv.ParseFloat(maxPriceStr, 64); err == nil {
+			filters.MaxPrice = &maxPrice
+		}
+	}
 
 	events, err := h.eventService.GetAll(filters)
 	if err != nil {

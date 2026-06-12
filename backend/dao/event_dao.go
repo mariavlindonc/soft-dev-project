@@ -26,6 +26,12 @@ func (d *EventDAOImpl) FindAll(filters domain.EventFilters) ([]domain.Event, err
 	if filters.DateTo != nil {
 		query = query.Where("event_date <= ?", *filters.DateTo)
 	}
+	if filters.MinPrice != nil {
+		query = query.Where("price >= ?", *filters.MinPrice)
+	}
+	if filters.MaxPrice != nil {
+		query = query.Where("price <= ?", *filters.MaxPrice)
+	}
 
 	var events []domain.Event
 	err := query.Order("event_date ASC").Find(&events).Error

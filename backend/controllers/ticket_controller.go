@@ -22,6 +22,7 @@ func NewTicketController(s services.TicketServiceInterface) *TicketController {
 
 type purchaseTicketRequest struct {
 	EventID     uint   `json:"event_id"     binding:"required"`
+	Quantity    uint   `json:"quantity"     binding:"required,min=1"`
 	PresaleCode string `json:"presale_code"`
 }
 
@@ -69,7 +70,7 @@ func (h *TicketController) Purchase(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	ticket, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID, PresaleCode: req.PresaleCode})
+	tickets, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID, Quantity: req.Quantity, PresaleCode: req.PresaleCode})
 	if err != nil {
 		if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -79,7 +80,11 @@ func (h *TicketController) Purchase(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, toTicketResponse(ticket))
+	resp := make([]ticketResponse, len(tickets))
+	for i, t := range tickets {
+		resp[i] = toTicketResponse(t)
+	}
+	c.JSON(http.StatusCreated, resp)
 }
 
 func (h *TicketController) GetMyTickets(c *gin.Context) {

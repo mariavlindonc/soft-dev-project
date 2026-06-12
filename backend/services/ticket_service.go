@@ -15,7 +15,7 @@ import (
 // ---------------------------------------------------------------------------
 
 type TicketServiceInterface interface {
-	Purchase(userID uint, input PurchaseInput) (*domain.Ticket, error)
+	Purchase(userID uint, input PurchaseInput) ([]*domain.Ticket, error)
 	GetByUser(userID uint) ([]domain.Ticket, error)
 	Cancel(ticketID uint, requestingUserID uint) error
 	Transfer(ticketID uint, fromUserID uint, input TransferInput) error
@@ -27,6 +27,7 @@ type TicketServiceInterface interface {
 
 type PurchaseInput struct {
 	EventID     uint
+	Quantity    uint
 	PresaleCode string
 }
 
@@ -63,7 +64,11 @@ func NewTicketService(
 // enforces pre-sale phase rules (before capacity check to avoid
 // leaking capacity info), and creates the ticket inside a
 // database transaction.
-func (s *TicketService) Purchase(userID uint, input PurchaseInput) (*domain.Ticket, error) {
+func (s *TicketService) Purchase(userID uint, input PurchaseInput) ([]*domain.Ticket, error) {
+	if input.Quantity == 0 {
+		input.Quantity = 1
+	}
+
 	event, err := s.eventDAO.FindByID(input.EventID)
 	if err != nil {
 		return nil, fmt.Errorf("event %d: %w", input.EventID, ErrNotFound)
@@ -89,29 +94,34 @@ func (s *TicketService) Purchase(userID uint, input PurchaseInput) (*domain.Tick
 	if err != nil {
 		return nil, fmt.Errorf("count tickets: %w", err)
 	}
-	if activeCount >= event.Capacity {
+	if activeCount+int(input.Quantity) > event.Capacity {
 		return nil, fmt.Errorf("event %d: %w", event.ID, ErrNoCapacity)
 	}
 
-	ticket := &domain.Ticket{
-		UserID:        userID,
-		EventID:       event.ID,
-		Status:        "active",
-		PurchasePrice: event.Price,
+	tickets := make([]*domain.Ticket, input.Quantity)
+	for i := range tickets {
+		tickets[i] = &domain.Ticket{
+			UserID:        userID,
+			EventID:       event.ID,
+			Status:        "active",
+			PurchasePrice: event.Price,
+		}
 	}
 
 	if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error {
-		if err := s.ticketDAO.Create(ticket); err != nil {
-			return err
+		for _, ticket := range tickets {
+			if err := s.ticketDAO.Create(ticket); err != nil {
+				return err
+			}
 		}
-		return s.eventDAO.IncrementTicketsSold(event.ID)
+		return s.eventDAO.IncrementTicketsSold(event.ID, int(input.Quantity))
 	}); err != nil {
 		return nil, fmt.Errorf("purchase ticket: %w", err)
 	}
 
-	s.sendPurchaseEmail(userID, ticket, event)
+	s.sendPurchaseEmail(userID, tickets[0], event)
 
-	return ticket, nil
+	return tickets, nil
 }
 
 func (s *TicketService) GetByUser(userID uint) ([]domain.Ticket, error) {

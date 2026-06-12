@@ -102,6 +102,7 @@ export default function EventDetailPage() {
     if (!event) return
     await purchaseTicket({
       event_id: event.id,
+      quantity,
       presale_code: isPresaleCodeRequired ? presaleCode : undefined,
     })
     setPurchased(true)

@@ -19,8 +19,17 @@ func (m *MockAuthService) Register(input services.RegisterInput) (*domain.User, 
 	return args.Get(0).(*domain.User), args.Error(1)
 }
 
-func (m *MockAuthService) Login(input services.LoginInput) (string, error) {
+func (m *MockAuthService) Login(input services.LoginInput) (string, *domain.User, error) {
 	args := m.Called(input)
+	var user *domain.User
+	if args.Get(1) != nil {
+		user = args.Get(1).(*domain.User)
+	}
+	return args.String(0), user, args.Error(2)
+}
+
+func (m *MockAuthService) GenerateToken(userID uint, role string) (string, error) {
+	args := m.Called(userID, role)
 	return args.String(0), args.Error(1)
 }
 
@@ -70,12 +79,12 @@ type MockTicketService struct {
 	mock.Mock
 }
 
-func (m *MockTicketService) Purchase(userID uint, input services.PurchaseInput) (*domain.Ticket, error) {
+func (m *MockTicketService) Purchase(userID uint, input services.PurchaseInput) ([]*domain.Ticket, error) {
 	args := m.Called(userID, input)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domain.Ticket), args.Error(1)
+	return args.Get(0).([]*domain.Ticket), args.Error(1)
 }
 
 func (m *MockTicketService) GetByUser(userID uint) ([]domain.Ticket, error) {

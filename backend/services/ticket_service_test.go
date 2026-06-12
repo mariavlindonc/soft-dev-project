@@ -27,15 +27,16 @@ func TestPurchase(t *testing.T) {
 		ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
 		// The transaction calls Create and IncrementTicketsSold
 		ticketDAO.On("Create", mock.AnythingOfType("*domain.Ticket")).Return(nil)
-		eventDAO.On("IncrementTicketsSold", uint(1)).Return(nil)
+		eventDAO.On("IncrementTicketsSold", uint(1), 1).Return(nil)
 		userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "buyer@test.com"}, nil)
 		email.On("SendPurchaseConfirmation", "buyer@test.com", mock.Anything).Return(nil)
 
-		ticket, err := svc.Purchase(10, PurchaseInput{EventID: 1})
+		tickets, err := svc.Purchase(10, PurchaseInput{EventID: 1, Quantity: 1})
 		require.NoError(t, err)
-		assert.Equal(t, uint(1), ticket.EventID)
-		assert.Equal(t, "active", ticket.Status)
-		assert.Equal(t, 50.0, ticket.PurchasePrice)
+		require.Len(t, tickets, 1)
+		assert.Equal(t, uint(1), tickets[0].EventID)
+		assert.Equal(t, "active", tickets[0].Status)
+		assert.Equal(t, 50.0, tickets[0].PurchasePrice)
 	})
 
 	t.Run("cancelled event returns ErrEventCancelled", func(t *testing.T) {
@@ -90,11 +91,11 @@ func TestPurchasePresale(t *testing.T) {
 		ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
 		ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
 		ticketDAO.On("Create", mock.AnythingOfType("*domain.Ticket")).Return(nil)
-		eventDAO.On("IncrementTicketsSold", uint(1)).Return(nil)
+		eventDAO.On("IncrementTicketsSold", uint(1), 1).Return(nil)
 		userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "u@test.com"}, nil)
 		email.On("SendPurchaseConfirmation", "u@test.com", mock.Anything).Return(nil)
 
-		_, err := svc.Purchase(10, PurchaseInput{EventID: 1, PresaleCode: "PRE123"})
+		_, err := svc.Purchase(10, PurchaseInput{EventID: 1, Quantity: 1, PresaleCode: "PRE123"})
 		require.NoError(t, err)
 	})
 

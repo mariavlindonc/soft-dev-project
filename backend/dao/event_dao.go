@@ -56,9 +56,9 @@ func (d *EventDAOImpl) Delete(id uint) error {
 	return d.db.Delete(&domain.Event{}, id).Error
 }
 
-func (d *EventDAOImpl) IncrementTicketsSold(eventID uint) error {
+func (d *EventDAOImpl) IncrementTicketsSold(eventID uint, delta int) error {
 	return d.db.Model(&domain.Event{}).Where("id = ?", eventID).
-		UpdateColumn("tickets_sold", gorm.Expr("tickets_sold + 1")).Error
+		UpdateColumn("tickets_sold", gorm.Expr("tickets_sold + ?", delta)).Error
 }
 
 func (d *EventDAOImpl) DecrementTicketsSold(eventID uint) error {

@@ -25,7 +25,7 @@ function computeSaleStatus(event: Event): SaleStatus {
   if (event.presale_active && event.presale_start_date && new Date(event.presale_start_date) > new Date()) {
     return { phase: 'not_yet_open', presale_start_date: event.presale_start_date, general_sale_date: event.general_sale_date, message: 'Preventa próximamente' }
   }
-  return { phase: 'public', presale_start_date: null, general_sale_date: null, message: 'Entradas disponibles' }
+  return { phase: 'public', presale_start_date: null, general_sale_date: null, message: '' }
 }
 
 export default function EventDetailPage() {
@@ -194,13 +194,20 @@ export default function EventDetailPage() {
             <div className="event-detail-price">{formatPrice(event.price)}</div>
 
             <div className="event-detail-capacity">
-              Capacidad: <span>{event.tickets_sold}/{event.capacity}</span>
-              {event.tickets_sold >= event.capacity && (
-                <span className="sold-out-label">Agotado</span>
-              )}
+              Entradas restantes: <span>{Math.max(0, event.capacity - event.tickets_sold)}</span>
             </div>
 
-            {event.tickets_sold < event.capacity && (
+            {event.status === 'cancelled' && (
+              <div className="alert alert-error">Este evento fue cancelado.</div>
+            )}
+            {event.tickets_sold >= event.capacity && (
+              <div className="alert alert-error">Entradas agotadas.</div>
+            )}
+            {saleStatus?.phase === 'presale' && (
+              <div className="alert alert-info">Pre-venta</div>
+            )}
+
+            {event.status !== 'cancelled' && event.tickets_sold < event.capacity && (
               <div className="purchase-section">
                 {saleStatus && (
                   <span className={`sale-status ${phaseClass[saleStatus.phase] ?? 'closed'}`}>
@@ -208,7 +215,7 @@ export default function EventDetailPage() {
                   </span>
                 )}
 
-                {saleStatus && (
+                {saleStatus?.message && (
                   <p className="alert alert-info">{saleStatus.message}</p>
                 )}
 
@@ -279,7 +286,7 @@ export default function EventDetailPage() {
                     type="button"
                     className="btn btn-primary btn-lg"
                     onClick={handlePurchase}
-                    disabled={purchasing || (isPresaleCodeRequired && !presaleCode.trim()) || (!isAuthenticated && !authEmail.trim() || !authPassword.trim())}
+                    disabled={purchasing || saleStatus?.phase === 'not_yet_open' || (isPresaleCodeRequired && !presaleCode.trim()) || (!isAuthenticated && (!authEmail.trim() || !authPassword.trim()))}
                   >
                     {purchasing ? 'Comprando…' : `Comprar ${quantity > 1 ? `${quantity} entradas` : 'entrada'}`}
                   </button>

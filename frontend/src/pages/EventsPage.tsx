@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useEvents } from '../hooks/useEvents'
-import { formatDate, formatPrice } from '../utils/format'
+import EventCard from '../components/events/EventCard'
 
 const CATEGORIES = [
-  { value: 'concierto', label: 'Conciertos' },
-  { value: 'teatro', label: 'Teatro' },
-  { value: 'deporte', label: 'Deportes' },
-  { value: 'conferencia', label: 'Conferencias' },
-  { value: 'familiar', label: 'Familiares' },
-  { value: 'feria', label: 'Ferias' },
+  { value: 'aire libre', label: 'Aire Libre' },
+  { value: 'en salon', label: 'En Salón' },
+  { value: 'grupos emergentes', label: 'Grupos Emergentes' },
 ]
 
 export default function EventsPage() {
@@ -90,19 +87,7 @@ export default function EventsPage() {
           ) : (
             <div className="event-grid">
               {filtered.map((event) => (
-                <Link key={event.id} to={`/events/${event.id}`} className="event-card">
-                  <div
-                    className="event-card-image"
-                    style={{ backgroundImage: event.image_url ? `url(${event.image_url})` : undefined }}
-                  />
-                  <div className="event-card-body">
-                    <span className="event-category">{event.category ?? 'General'}</span>
-                    <h3>{event.title}</h3>
-                    <p className="event-date">{formatDate(event.event_date)}</p>
-                    <p className="event-location">{event.location}</p>
-                    <span className="event-price">{formatPrice(event.price)}</span>
-                  </div>
-                </Link>
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
           )}

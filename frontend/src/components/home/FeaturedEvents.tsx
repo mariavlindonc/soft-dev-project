@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Event } from '../../types'
 import { getEvents } from '../../api/events'
-import { formatPrice } from '../../utils/format'
+import { mockEvents } from '../../data/mockEvents'
+import EventCard from '../events/EventCard'
 
 export default function FeaturedEvents() {
   const [events, setEvents] = useState<Event[]>([])
@@ -11,7 +12,7 @@ export default function FeaturedEvents() {
   useEffect(() => {
     getEvents()
       .then((data) => setEvents(data.slice(0, 4)))
-      .catch(() => {})
+      .catch(() => setEvents(mockEvents.slice(0, 4)))
       .finally(() => setLoading(false))
   }, [])
 
@@ -22,9 +23,11 @@ export default function FeaturedEvents() {
           <h2>Eventos Destacados</h2>
           <Link to="/events" className="btn btn-outline">Ver todos</Link>
         </div>
-        <div className="event-grid">
+        <div className="event-grid__grid">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="event-card skeleton" />
+            <div key={i} className="event-card skeleton">
+              <div className="event-card__image-wrapper" />
+            </div>
           ))}
         </div>
       </section>
@@ -39,27 +42,9 @@ export default function FeaturedEvents() {
         <h2>Eventos Destacados</h2>
         <Link to="/events" className="btn btn-outline">Ver todos</Link>
       </div>
-      <div className="event-grid">
+      <div className="event-grid__grid">
         {events.map((event) => (
-          <Link key={event.id} to={`/events/${event.id}`} className="event-card">
-            <div
-              className="event-card-image"
-              style={{ backgroundImage: event.image_url ? `url(${event.image_url})` : undefined }}
-            />
-            <div className="event-card-body">
-              <span className="event-category">{event.category ?? 'General'}</span>
-              <h3>{event.title}</h3>
-              <p className="event-date">
-                {new Date(event.event_date).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-              <p className="event-location">{event.location}</p>
-              <span className="event-price">{formatPrice(event.price)}</span>
-            </div>
-          </Link>
+          <EventCard key={event.id} event={event} />
         ))}
       </div>
     </section>

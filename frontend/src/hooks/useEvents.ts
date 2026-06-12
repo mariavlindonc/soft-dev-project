@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Event, EventFilters } from '../types'
 import { getEvents } from '../api/events'
+import { mockEvents } from '../data/mockEvents'
 
 export function useEvents(initialFilters?: EventFilters) {
   const [events, setEvents] = useState<Event[]>([])
@@ -15,7 +16,7 @@ export function useEvents(initialFilters?: EventFilters) {
       const data = await getEvents(f)
       setEvents(data)
     } catch {
-      setError('Error al cargar los eventos')
+      setEvents(mockEvents)
     } finally {
       setLoading(false)
     }

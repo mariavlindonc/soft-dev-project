@@ -1,12 +1,9 @@
 import { Link } from 'react-router-dom'
 
 const CATEGORIES = [
-  { name: 'Conciertos', icon: '🎵', slug: 'conciertos' },
-  { name: 'Teatro', icon: '🎭', slug: 'teatro' },
-  { name: 'Deportes', icon: '⚽', slug: 'deportes' },
-  { name: 'Conferencias', icon: '🎤', slug: 'conferencias' },
-  { name: 'Festivales', icon: '🎪', slug: 'festivales' },
-  { name: 'Talleres', icon: '🎨', slug: 'talleres' },
+  { name: 'Aire Libre', icon: '🌳', slug: 'aire libre' },
+  { name: 'En Salón', icon: '🏛️', slug: 'en salon' },
+  { name: 'Grupos Emergentes', icon: '🌟', slug: 'grupos emergentes' },
 ]
 
 export default function Categories() {

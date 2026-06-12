@@ -30,7 +30,7 @@ func TestRegister(t *testing.T) {
 		mockSvc.On("Register", mock.MatchedBy(func(input services.RegisterInput) bool {
 			return input.Email == "a@test.com"
 		})).Return(&domain.User{ID: 1, Name: "Alice", Email: "a@test.com", Role: "client"}, nil)
-		mockSvc.On("GenerateToken", uint(1), "client").Return("jwt-token", nil)
+		mockSvc.On("GenerateToken", uint(1), "client").Return("jwt-token-123", nil)
 
 		r := setupRouter()
 		r.POST("/register", ctrl.Register)
@@ -90,7 +90,7 @@ func TestLogin(t *testing.T) {
 		mockSvc.On("Login", services.LoginInput{
 			Email:    "a@test.com",
 			Password: "correct",
-		}).Return("jwt-token-123", &domain.User{}, nil)
+		}).Return("jwt-token-123", &domain.User{ID: 1, Name: "Alice", Email: "a@test.com", Role: "client"}, nil)
 
 		r := setupRouter()
 		r.POST("/login", ctrl.Login)

@@ -21,10 +21,7 @@ func (m *MockAuthService) Register(input services.RegisterInput) (*domain.User, 
 
 func (m *MockAuthService) Login(input services.LoginInput) (string, *domain.User, error) {
 	args := m.Called(input)
-	var user *domain.User
-	if args.Get(1) != nil {
-		user = args.Get(1).(*domain.User)
-	}
+	user, _ := args.Get(1).(*domain.User)
 	return args.String(0), user, args.Error(2)
 }
 

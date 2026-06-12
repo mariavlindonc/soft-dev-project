@@ -2,20 +2,20 @@
 
 Sistema de venta de entradas para eventos con roles de cliente y administrador, desarrollado como practico integrador 2026.
 
+---
+
 ## Tecnologias utilizadas
 
-| Capa | Tecnologia |
-|------|-----------|
-| **Backend** | Go 1.26, Gin, GORM, MySQL |
-| **Frontend** | React 19, TypeScript 6, Vite 8 |
-| **Autenticacion** | JWT (golang-jwt), bcrypt |
-| **Testing** | Go testing + testify |
+| Capa              | Tecnologia                     |
+| ----------------- | ------------------------------ |
+| **Backend**       | Go 1.26, Gin, GORM, MySQL      |
+| **Frontend**      | React 19, TypeScript 6, Vite 8 |
+| **Autenticacion** | JWT (golang-jwt), bcrypt       |
+| **Testing**       | Go testing + testify           |
 
-## Requisitos previos
+> [Arquitectura detallada](docs/architecture.md) — [API Reference](docs/api-reference.md)
 
-- Go 1.26+
-- Node.js 26+
-- MySQL 8+
+---
 
 ## Instalacion y uso
 
@@ -36,98 +36,102 @@ npm install
 npm run dev
 ```
 
-### Variables de entorno (backend)
+**Requisitos previos:**
+Go 1.26+, Node.js 26+, MySQL 8+
 
-Ver .env.example para configuracion de base de datos, JWT, TLS y email.
+> Proba la API con los [ejemplos de curl](docs/api-reference.md#ejemplos-de-uso) luego de iniciar el servidor.
 
-## Diagrama de base de datos
+---
 
-![Diagrama ER](docs/diagrama.jpeg)
+## Variables de entorno
 
-El esquema completo se encuentra en [docs/schema.sql](docs/schema.sql).
+Archivo `.env` en `backend/`. Ver [`.env.example`](backend/.env.example) para valores completos.
 
-### Entidades principales
+| Variable                                                  | Default                    | Descripcion                                 |
+| --------------------------------------------------------- | -------------------------- | ------------------------------------------- |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | `localhost:3306/ceibo_db`  | Conexion MySQL ([esquema](docs/database.md)) |
+| `JWT_SECRET`                                              | `change-me-...`            | Clave para firmar JWT                       |
+| `APP_PORT`                                                | `8443`                     | Puerto HTTPS                                |
+| `TLS_CERT_FILE`, `TLS_KEY_FILE`                           | `./certs/server.{crt,key}` | TLS obligatorio                             |
+| `CORS_ALLOWED_ORIGINS`                                    | `*`                        | Origenes CORS permitidos                    |
+| `EMAIL_PROVIDER`                                          | `log`                      | `log` (desarrollo) o `smtp` (produccion)    |
+| `SMTP_*`                                                  | -                          | Configuracion SMTP (si EMAIL_PROVIDER=smtp) |
 
-- **users** - clientes y administradores (soft-delete con GORM)
-- **events** - eventos con soporte de preventa (fechas, codigo, fases de venta)
-- **tickets** - entradas con estados: activa, cancelada, transferida
+---
 
-## Decisiones de diseno
+## Estructura del proyecto
 
-### 1. DAOs como interfaces para testabilidad
-
-Los repositorios (UserDAO, EventDAO, TicketDAO) se definen como interfaces en dao/interfaces.go. Esto permite inyectar mocks en los servicios y testear la logica de negocio sin base de datos real, siguiendo el principio de inversion de dependencias.
-
-### 2. Fases de venta con logica de dominio pura
-
-La preventa se modela con fechas (presale_start_date, general_sale_date) y un metodo CurrentSalePhase() en la entidad Event. Esto centraliza la logica en el dominio y la hace testeable sin depender del servicio o la base de datos.
-
-### 3. Email client con strategy pattern
-
-El cliente de email (clients/email_client.go) tiene dos implementaciones: logEmailClient para desarrollo (solo loguea) y smtpEmailClient para produccion. La seleccion se hace por variable de entorno, y la interfaz permite mockear en tests.
-
-## Testing
-
-```bash
-cd backend
-go test ./... -v -cover
+```
+soft-dev-project/
+├── backend/
+│   ├── main.go              # Entry point, DI, rutas, middlewares
+│   ├── clients/             # Email client — [strategy pattern](docs/architecture.md#3-email-client-con-strategy-pattern)
+│   ├── controllers/         # Handlers HTTP — [API reference](docs/api-reference.md)
+│   ├── dao/                 # Interfaces + [implementaciones GORM](docs/architecture.md#1-daos-como-interfaces-para-testabilidad)
+│   ├── domain/              # Entidades User, Event, Ticket — [modelo de datos](docs/database.md)
+│   ├── logger/              # Logger estructurado JSON
+│   └── services/            # Logica de negocio + [tests](docs/testing.md#tests-de-servicios)
+├── frontend/                # React + TypeScript + Vite
+├── database/                # Schema SQL + datos de ejemplo
+├── docs/                    # Documentacion detallada
+└── README.md
 ```
 
-### Cobertura por paquete
-
-| Paquete | Tipo | Cobertura actual |
-|---------|------|:----------------:|
-| domain/ | Unitario (puro) | 9/9 tests |
-| utils/ | Unitario (puro) | 9/9 tests |
-| services/ | Unitario (mocks) | 27/27 tests |
-| controllers/ | Integracion (httptest) | 27/27 tests |
-
-### Tests de servicios
-
-Usan **testify/mock** para simular los DAOs. Cada servicio se testea de forma aislada.
-
-### Tests de controladores
-
-Usan **net/http/httptest** para enviar requests HTTP directamente contra los handlers.
-
-### Tests ejecutados
-
-- TestCurrentSalePhase - 9 subtest (todos PASS) que cubren las 4 fases de venta mas casos borde con fechas nil y valores exactos en los limites.
-
-### Tests de utils
-
-- **password_test.go** - HashPassword, CheckPassword (correcta, incorrecta, vacia), HashPasswordUnique
-- **jwt_test.go** - GenerateJWT, ValidateToken (valido, firma invalida, malformado, vacio)
-
-### Tests de servicios (con testify/mock)
-
-- **auth_service_test.go** - Register (exito, password corta, email duplicado), Login (exito, password incorrecta, email desconocido)
-- **event_service_test.go** - GetAll, GetByID (exito, no encontrado), Create (valido, titulo vacio, capacidad cero, fecha pasada), Cancel (activo, ya cancelado, no encontrado), Update (exito, cancelado, no encontrado)
-- **ticket_service_test.go** - Purchase (exito, evento cancelado, sin capacidad), PurchasePresale (codigo correcto, sin codigo, codigo incorrecto), CancelTicket (propio, ajeno, ya cancelado), Transfer (a otro usuario, a si mismo), GetByUser, PurchaseNotFound
-- **report_service_test.go** - GetEventReport (exito, no encontrado), GetGlobalReport
-
-### Tests de controladores (httptest)
-
-- **middleware_test.go** - AuthRequired (sin header, formato invalido, token malformado), AdminRequired (admin pasa, client 403, sin rol 403)
-- **auth_controller_test.go** - Register (201, 400 campos faltantes, 400 email duplicado), Login (200 con token, 401 credenciales invalidas, 400 campo faltante)
-- **event_controller_test.go** - GetAll (200), GetByID (200, 404, 400), Create (201, 400), Update (200, 404), Delete (204, 404), GetSaleStatus (200)
-- **ticket_controller_test.go** - Purchase (201, 400 evento cancelado, 400 campo faltante), GetMyTickets (200), Cancel (204, 404), Transfer (200, 400 campo faltante)
-- **admin_controller_test.go** - GetReports (200), GetEventReport (200, 404)
+---
 
 ## Funcionalidades
 
 ### Cliente
-- Exploracion y filtro de eventos
-- Detalle de evento
-- Compra de entradas
-- Historial "Mis Entradas"
+
+- Exploracion y filtro de eventos por categoria y fecha
+- Detalle de evento con informacion completa
+- Compra de entradas (con soporte de preventa y codigo de acceso)
+- Historial "Mis Entradas" con estado de cada una
 - Cancelacion de compra
-- Traspaso de entrada
+- Traspaso de entrada a otro usuario por email
+- Notificaciones por email (confirmacion, cancelacion, transferencia)
 
 ### Administrador
-- Creacion, actualizacion y cancelacion de eventos
-- Reportes y metricas (ocupacion, ventas, compradores)
 
-### Extra (Bonus Track)
-- Preventa con codigo de acceso y fechas diferenciadas
-- Fases de venta: no abierta - preventa - venta general
+- Creacion, actualizacion y cancelacion de eventos
+- Reportes y metricas globales (ocupacion, ventas totales)
+- Reporte detallado por evento (incluye lista de compradores)
+
+### Funcionalidad Extra (Bonus Track)
+
+- Preventa con codigo de acceso y [fechas diferenciadas](docs/architecture.md#2-fases-de-venta-con-logica-de-dominio-pura)
+- Fases de venta: no abierta → preventa → venta general
+- [Logging estructurado JSON](docs/architecture.md#3-email-client-con-strategy-pattern), email intercambiable, [transacciones atomicas](docs/architecture.md#4-transacciones-atomicas)
+
+---
+
+## Documentacion detallada
+
+| Documento                              | Contenido                                                     |
+| -------------------------------------- | ------------------------------------------------------------- |
+| [API Reference](docs/api-reference.md) | Endpoints, ejemplos curl, request/response DTOs, codigos HTTP |
+| [Base de Datos](docs/database.md)      | Entidades, campos, relaciones, diagrama ER                    |
+| [Arquitectura](docs/architecture.md)   | Patrones, diseno, capas, seguridad                            |
+| [Testing](docs/testing.md)             | Tests por paquete, cobertura, casos                           |
+
+---
+
+## Estado del proyecto
+
+| Componente    |    Estado     | Detalle                                                       |
+| ------------- | :-----------: | ------------------------------------------------------------- |
+| Backend API   |   Completo    | 16 endpoints, 72+ tests, arquitectura limpia                  |
+| Frontend      | En desarrollo | Template inicial. Pendiente: routing, pages, API, auth, forms |
+| Base de datos |   Completo    | Schema SQL + migraciones GORM                                 |
+| Documentacion |   Completo    | README + docs detallados                                      |
+
+---
+
+## Autores
+
+BRUA, Jonathan
+HERNANDEZ, Juan
+LINDON, Maria Victoria
+.., Athina
+
+Proyecto integrador 2026 - Universidad Catolica de Cordoba (UCC).

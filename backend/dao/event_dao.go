@@ -1,6 +1,8 @@
 package db
 
 import (
+	"time"
+
 	"backend/domain"
 
 	"gorm.io/gorm"
@@ -16,6 +18,9 @@ func NewEventDAO(db *gorm.DB) *EventDAOImpl {
 
 func (d *EventDAOImpl) FindAll(filters domain.EventFilters) ([]domain.Event, error) {
 	query := d.db.Model(&domain.Event{}).Preload("CreatedBy")
+
+	// Hide events that have already ended
+	query = query.Where("event_date >= ?", time.Now())
 
 	if filters.Category != "" {
 		query = query.Where("category = ?", filters.Category)

@@ -306,21 +306,21 @@ func salePhaseMessage(phase domain.SalePhase, presaleStart, generalSale *time.Ti
 	switch phase {
 	case domain.PhaseNotYetOpen:
 		if presaleStart != nil {
-			return fmt.Sprintf("Sales have not opened yet. Pre-sale starts on %s.", presaleStart.Format("2006-01-02 15:04"))
+			return fmt.Sprintf("Las ventas aún no abrieron. La preventa comienza el %s.", presaleStart.Format("02/01/2006 15:04"))
 		}
-		return "Sales have not opened yet."
+		return "Las ventas aún no han comenzado."
 	case domain.PhasePresale:
 		if generalSale != nil {
-			return fmt.Sprintf("Pre-sale is active. General sale starts on %s. An access code is required.", generalSale.Format("2006-01-02 15:04"))
+			return fmt.Sprintf("Pre-venta activa. La venta general empieza en %s. Se require un código de acceso para comprar.", generalSale.Format("02/01/2006 15:04"))
 		}
-		return "Pre-sale is currently active. An access code is required to purchase tickets."
+		return "Preventa activa. Se requiere un código de acceso para comprar."
 	case domain.PhasePublic:
 		if generalSale != nil {
-			return fmt.Sprintf("General sale started on %s. No access code required.", generalSale.Format("2006-01-02 15:04"))
+			return fmt.Sprintf("Venta general disponible desde el %s. No se requiere código de acceso.", generalSale.Format("02/01/2006 15:04"))
 		}
-		return "General sale is open. No access code is required."
+		return "Venta general abierta. No se requiere código de acceso."
 	case domain.PhaseNoPresale:
-		return "Tickets are available for purchase."
+		return ""
 	default:
 		return ""
 	}
@@ -343,12 +343,23 @@ func (h *EventController) GetSaleStatus(c *gin.Context) {
 		return
 	}
 
-	phase := event.CurrentSalePhase(time.Now())
+	var phase domain.SalePhase
+	var msg string
+	if event.Status == "cancelled" {
+		phase = domain.PhaseNotYetOpen
+		msg = "Evento cancelado"
+	} else if event.Capacity > 0 && event.TicketsSold >= event.Capacity {
+		phase = domain.PhaseNotYetOpen
+		msg = "Entradas agotadas"
+	} else {
+		phase = event.CurrentSalePhase(time.Now())
+		msg = salePhaseMessage(phase, event.PresaleStartDate, event.GeneralSaleDate)
+	}
 	resp := saleStatusResponse{
 		Phase:            phase,
 		PresaleStartDate: timePtrToString(event.PresaleStartDate),
 		GeneralSaleDate:  timePtrToString(event.GeneralSaleDate),
-		Message:          salePhaseMessage(phase, event.PresaleStartDate, event.GeneralSaleDate),
+		Message:          msg,
 	}
 
 	c.JSON(http.StatusOK, resp)

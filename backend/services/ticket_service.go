@@ -173,6 +173,9 @@ func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferI
 	if ticket.Status == "cancelled" {
 		return fmt.Errorf("ticket %d: %w", ticketID, ErrAlreadyCancelled)
 	}
+	if ticket.Status == "transferred" {
+		return fmt.Errorf("ticket %d: %w", ticketID, ErrAlreadyTransferred)
+	}
 
 	targetUser, err := s.userDAO.FindByEmail(input.ToUserEmail)
 	if err != nil {
@@ -183,6 +186,7 @@ func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferI
 	}
 
 	now := time.Now()
+	ticket.UserID = targetUser.ID
 	ticket.TransferredToID = &targetUser.ID
 	ticket.TransferredAt = &now
 	ticket.Status = "transferred"

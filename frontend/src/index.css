@@ -496,6 +496,11 @@ img { display: block; max-width: 100%; }
   color: var(--white);
 }
 
+.event-card__status-badge--presale {
+  background: #8e44ad;
+  color: var(--white);
+}
+
 .event-card.skeleton .event-card__image-wrapper {
   background: var(--beige);
   animation: pulse 1.5s infinite;

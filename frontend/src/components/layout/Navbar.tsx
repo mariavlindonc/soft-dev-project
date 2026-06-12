@@ -28,7 +28,6 @@ export default function Navbar() {
         ) : (
           <>
             <Link to="/login">Iniciar Sesión</Link>
-            <Link to="/register">Registrarse</Link>
           </>
         )}
       </div>

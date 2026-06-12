@@ -13,6 +13,7 @@ export default function TicketsPage() {
   const [transferring, setTransferring] = useState(false)
   const [transferError, setTransferError] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<number | null>(null)
+  const [cancelConfirm, setCancelConfirm] = useState<{ ticketId: number; eventTitle: string } | null>(null)
 
   if (!isAuthenticated) {
     return (
@@ -27,6 +28,7 @@ export default function TicketsPage() {
 
   async function handleCancel(id: number) {
     setCancellingId(id)
+    setCancelConfirm(null)
     const ok = await cancelTicket(id)
     setCancellingId(null)
     if (!ok) alert('No se pudo cancelar la entrada')
@@ -119,12 +121,22 @@ export default function TicketsPage() {
                     <button
                       type="button"
                       className="btn btn-danger btn-sm"
-                      onClick={() => handleCancel(ticket.id)}
+                      onClick={() => setCancelConfirm({ ticketId: ticket.id, eventTitle: ticket.event_title || `Evento #${ticket.event_id}` })}
                       disabled={cancellingId === ticket.id}
                     >
                       {cancellingId === ticket.id ? 'Cancelando…' : 'Cancelar'}
                     </button>
                   </>
+                )}
+                {ticket.status === 'transferred' && (
+                  <button
+                    type="button"
+                    className="btn btn-danger btn-sm"
+                    onClick={() => setCancelConfirm({ ticketId: ticket.id, eventTitle: ticket.event_title || `Evento #${ticket.event_id}` })}
+                    disabled={cancellingId === ticket.id}
+                  >
+                    {cancellingId === ticket.id ? 'Cancelando…' : 'Cancelar'}
+                  </button>
                 )}
               </div>
             </div>
@@ -157,6 +169,30 @@ export default function TicketsPage() {
               </button>
               <button type="button" className="btn btn-primary" onClick={handleTransfer} disabled={transferring}>
                 {transferring ? 'Transfiriendo…' : 'Transferir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {cancelConfirm && (
+        <div className="modal-overlay" onClick={() => setCancelConfirm(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Cancelar entrada</h3>
+            <p>¿Estás seguro de que querés cancelar tu entrada para <strong>{cancelConfirm.eventTitle}</strong>?</p>
+            <p className="form-footer">Esta acción no se puede deshacer.</p>
+
+            <div className="modal-actions">
+              <button type="button" className="btn btn-outline" onClick={() => setCancelConfirm(null)}>
+                Volver
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => handleCancel(cancelConfirm.ticketId)}
+                disabled={cancellingId === cancelConfirm.ticketId}
+              >
+                {cancellingId === cancelConfirm.ticketId ? 'Cancelando…' : 'Sí, cancelar'}
               </button>
             </div>
           </div>

@@ -14,7 +14,7 @@ export default function EventCard({ event }: EventCardProps) {
     cancelled: 'Cancelado',
   }
 
-  const showStatus = event.status === 'sold_out' || event.status === 'cancelled'
+  const showStatus = event.status === 'sold_out' || event.status === 'cancelled' || event.status === 'presale'
 
   return (
     <Link to={`/events/${event.id}`} className="event-card">

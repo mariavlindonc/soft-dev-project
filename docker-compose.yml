@@ -1,0 +1,42 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: ceibo_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./database/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: ceibo_db
+      DB_USER: root
+      DB_PASSWORD: root123
+      JWT_SECRET: ceibo-dev-secret-key-2026
+      APP_PORT: "8443"
+      CORS_ALLOWED_ORIGINS: "*"
+    ports:
+      - "8443:8443"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -227,4 +228,274 @@ func TestPurchaseNotFound(t *testing.T) {
 
 	_, err := svc.Purchase(10, PurchaseInput{EventID: 999})
 	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestPurchaseNotYetOpen(t *testing.T) {
+	presaleStart := time.Now().Add(24 * time.Hour)
+	generalSale := time.Now().Add(48 * time.Hour)
+	event := &domain.Event{
+		ID:               1,
+		Status:           "active",
+		Capacity:         100,
+		PresaleActive:    true,
+		PresaleStartDate: &presaleStart,
+		GeneralSaleDate:  &generalSale,
+	}
+
+	eventDAO := new(MockEventDAO)
+	svc := NewTicketService(new(MockTicketDAO), eventDAO, new(MockUserDAO), new(MockEmailClient))
+
+	eventDAO.On("FindByID", uint(1)).Return(event, nil)
+
+	_, err := svc.Purchase(10, PurchaseInput{EventID: 1})
+	assert.ErrorIs(t, err, ErrSalesNotOpen)
+}
+
+func TestTransferTicketNotFound(t *testing.T) {
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, new(MockEventDAO), new(MockUserDAO), new(MockEmailClient))
+
+	ticketDAO.On("FindByID", uint(99)).Return(nil, errors.New("not found"))
+
+	err := svc.Transfer(99, 10, TransferInput{ToUserEmail: "x@test.com"})
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestTransferTicketNotOwned(t *testing.T) {
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, new(MockEventDAO), new(MockUserDAO), new(MockEmailClient))
+
+	ticketDAO.On("FindByID", uint(1)).Return(&domain.Ticket{ID: 1, UserID: 99, Status: "active"}, nil)
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "x@test.com"})
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestTransferCancelledTicket(t *testing.T) {
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, new(MockEventDAO), new(MockUserDAO), new(MockEmailClient))
+
+	ticketDAO.On("FindByID", uint(1)).Return(&domain.Ticket{ID: 1, UserID: 10, Status: "cancelled"}, nil)
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "x@test.com"})
+	assert.ErrorIs(t, err, ErrAlreadyCancelled)
+}
+
+func TestTransferTransferredTicket(t *testing.T) {
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, new(MockEventDAO), new(MockUserDAO), new(MockEmailClient))
+
+	ticketDAO.On("FindByID", uint(1)).Return(&domain.Ticket{ID: 1, UserID: 10, Status: "transferred"}, nil)
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "x@test.com"})
+	assert.ErrorIs(t, err, ErrAlreadyTransferred)
+}
+
+func TestTransferTargetNotFound(t *testing.T) {
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	svc := NewTicketService(ticketDAO, new(MockEventDAO), userDAO, new(MockEmailClient))
+
+	ticketDAO.On("FindByID", uint(1)).Return(&domain.Ticket{ID: 1, UserID: 10, Status: "active"}, nil)
+	userDAO.On("FindByEmail", "nobody@test.com").Return(nil, errors.New("not found"))
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "nobody@test.com"})
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestCancelTicketNotFound(t *testing.T) {
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, new(MockEventDAO), new(MockUserDAO), new(MockEmailClient))
+
+	ticketDAO.On("FindByID", uint(99)).Return(nil, errors.New("not found"))
+
+	err := svc.Cancel(99, 10)
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestPurchaseEmailUserNotFound(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	event := &domain.Event{ID: 1, Status: "active", Capacity: 100, Price: 50}
+	eventDAO.On("FindByID", uint(1)).Return(event, nil)
+	ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Create", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	eventDAO.On("IncrementTicketsSold", uint(1), 1).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(nil, errors.New("user not found"))
+
+	tickets, err := svc.Purchase(10, PurchaseInput{EventID: 1, Quantity: 1})
+	require.NoError(t, err)
+	assert.Len(t, tickets, 1)
+	email.AssertNotCalled(t, "SendPurchaseConfirmation")
+}
+
+func TestPurchaseEmailSendFails(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	event := &domain.Event{ID: 1, Status: "active", Capacity: 100, Price: 50}
+	eventDAO.On("FindByID", uint(1)).Return(event, nil)
+	ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Create", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	eventDAO.On("IncrementTicketsSold", uint(1), 1).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "u@test.com"}, nil)
+	email.On("SendPurchaseConfirmation", "u@test.com", mock.Anything).Return(fmt.Errorf("smtp error"))
+
+	tickets, err := svc.Purchase(10, PurchaseInput{EventID: 1, Quantity: 1})
+	require.NoError(t, err)
+	assert.Len(t, tickets, 1)
+}
+
+func TestCancelEmailUserNotFound(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	eventDAO.On("DecrementTicketsSold", uint(5)).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(nil, errors.New("user not found"))
+
+	err := svc.Cancel(1, 10)
+	require.NoError(t, err)
+	email.AssertNotCalled(t, "SendCancellationNotice")
+}
+
+func TestCancelEmailEventNotFound(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	eventDAO.On("DecrementTicketsSold", uint(5)).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "u@test.com"}, nil)
+	eventDAO.On("FindByID", uint(5)).Return(nil, errors.New("event not found"))
+
+	err := svc.Cancel(1, 10)
+	require.NoError(t, err)
+	email.AssertNotCalled(t, "SendCancellationNotice")
+}
+
+func TestCancelEmailSendFails(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	eventDAO.On("DecrementTicketsSold", uint(5)).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "u@test.com"}, nil)
+	eventDAO.On("FindByID", uint(5)).Return(&domain.Event{ID: 5, Title: "Concert"}, nil)
+	email.On("SendCancellationNotice", "u@test.com", mock.Anything).Return(fmt.Errorf("smtp error"))
+
+	err := svc.Cancel(1, 10)
+	require.NoError(t, err)
+}
+
+func TestTransferEmailUserNotFound(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	userDAO.On("FindByEmail", "target@test.com").Return(&domain.User{ID: 20, Email: "target@test.com"}, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(nil, errors.New("user not found"))
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "target@test.com"})
+	require.NoError(t, err)
+	email.AssertNotCalled(t, "SendTransferNotice")
+}
+
+func TestTransferEmailEventNotFound(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	userDAO.On("FindByEmail", "target@test.com").Return(&domain.User{ID: 20, Email: "target@test.com"}, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "from@test.com"}, nil)
+	eventDAO.On("FindByID", uint(5)).Return(nil, errors.New("not found"))
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "target@test.com"})
+	require.NoError(t, err)
+	email.AssertNotCalled(t, "SendTransferNotice")
+}
+
+func TestTransferEmailSendFails(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	userDAO.On("FindByEmail", "target@test.com").Return(&domain.User{ID: 20, Email: "target@test.com"}, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "from@test.com"}, nil)
+	eventDAO.On("FindByID", uint(5)).Return(&domain.Event{ID: 5, Title: "Concert"}, nil)
+	email.On("SendTransferNotice", "from@test.com", "target@test.com", mock.Anything).Return(fmt.Errorf("smtp error"))
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "target@test.com"})
+	require.NoError(t, err)
+}
+
+func TestToTicketInfo(t *testing.T) {
+	loc := "Buenos Aires"
+	event := &domain.Event{
+		Title:    "Concert",
+		EventDate: time.Date(2026, 6, 15, 20, 0, 0, 0, time.UTC),
+		Location: &loc,
+	}
+	ticket := &domain.Ticket{ID: 1, PurchasePrice: 50.0}
+
+	info := toTicketInfo(ticket, event)
+	assert.Equal(t, uint(1), info.TicketID)
+	assert.Equal(t, "Concert", info.EventTitle)
+	assert.Equal(t, "Buenos Aires", info.Location)
+	assert.Equal(t, 50.0, info.Price)
+}
+
+func TestToTicketInfoNilLocation(t *testing.T) {
+	event := &domain.Event{
+		Title:    "Concert",
+		EventDate: time.Date(2026, 6, 15, 20, 0, 0, 0, time.UTC),
+	}
+	ticket := &domain.Ticket{ID: 1, PurchasePrice: 50.0}
+
+	info := toTicketInfo(ticket, event)
+	assert.Equal(t, "", info.Location)
 }

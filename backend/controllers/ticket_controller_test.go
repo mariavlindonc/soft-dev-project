@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -178,4 +179,211 @@ func TestTransferTicket(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
+
+	t.Run("invalid ticket id returns 400", func(t *testing.T) {
+		ctrl := NewTicketController(new(MockTicketService))
+		r := setupRouter()
+		r.PATCH("/tickets/:id/transfer", setAuthContext("client", 10), ctrl.Transfer)
+
+		body := `{"to_user_email":"other@test.com"}`
+		req := httptest.NewRequest(http.MethodPatch, "/tickets/abc/transfer", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found returns 404", func(t *testing.T) {
+		mockSvc := new(MockTicketService)
+		ctrl := NewTicketController(mockSvc)
+
+		mockSvc.On("Transfer", uint(99), uint(10), mock.Anything).Return(services.ErrNotFound)
+
+		r := setupRouter()
+		r.PATCH("/tickets/:id/transfer", setAuthContext("client", 10), ctrl.Transfer)
+
+		body := `{"to_user_email":"other@test.com"}`
+		req := httptest.NewRequest(http.MethodPatch, "/tickets/99/transfer", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("internal error returns 500", func(t *testing.T) {
+		mockSvc := new(MockTicketService)
+		ctrl := NewTicketController(mockSvc)
+
+		mockSvc.On("Transfer", uint(1), uint(10), mock.Anything).Return(fmt.Errorf("db error"))
+
+		r := setupRouter()
+		r.PATCH("/tickets/:id/transfer", setAuthContext("client", 10), ctrl.Transfer)
+
+		body := `{"to_user_email":"other@test.com"}`
+		req := httptest.NewRequest(http.MethodPatch, "/tickets/1/transfer", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestPurchaseTicketErrors(t *testing.T) {
+	t.Run("no capacity returns 400", func(t *testing.T) {
+		mockSvc := new(MockTicketService)
+		ctrl := NewTicketController(mockSvc)
+
+		mockSvc.On("Purchase", uint(10), mock.Anything).Return(nil, services.ErrNoCapacity)
+
+		r := setupRouter()
+		r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
+
+		body := `{"event_id":1,"quantity":1}`
+		req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("not found returns 400", func(t *testing.T) {
+		mockSvc := new(MockTicketService)
+		ctrl := NewTicketController(mockSvc)
+
+		mockSvc.On("Purchase", uint(10), mock.Anything).Return(nil, services.ErrNotFound)
+
+		r := setupRouter()
+		r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
+
+		body := `{"event_id":999,"quantity":1}`
+		req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("internal error returns 500", func(t *testing.T) {
+		mockSvc := new(MockTicketService)
+		ctrl := NewTicketController(mockSvc)
+
+		mockSvc.On("Purchase", uint(10), mock.Anything).Return(nil, fmt.Errorf("db error"))
+
+		r := setupRouter()
+		r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
+
+		body := `{"event_id":1,"quantity":1}`
+		req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestCancelTicketErrors(t *testing.T) {
+	t.Run("invalid id returns 400", func(t *testing.T) {
+		ctrl := NewTicketController(new(MockTicketService))
+		r := setupRouter()
+		r.PATCH("/tickets/:id/cancel", setAuthContext("client", 10), ctrl.Cancel)
+
+		req := httptest.NewRequest(http.MethodPatch, "/tickets/abc/cancel", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("internal error returns 500", func(t *testing.T) {
+		mockSvc := new(MockTicketService)
+		ctrl := NewTicketController(mockSvc)
+
+		mockSvc.On("Cancel", uint(1), uint(10)).Return(fmt.Errorf("db error"))
+
+		r := setupRouter()
+		r.PATCH("/tickets/:id/cancel", setAuthContext("client", 10), ctrl.Cancel)
+
+		req := httptest.NewRequest(http.MethodPatch, "/tickets/1/cancel", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestGetMyTicketsError(t *testing.T) {
+	mockSvc := new(MockTicketService)
+	ctrl := NewTicketController(mockSvc)
+
+	mockSvc.On("GetByUser", uint(10)).Return([]domain.Ticket{}, fmt.Errorf("db error"))
+
+	r := setupRouter()
+	r.GET("/tickets", setAuthContext("client", 10), ctrl.GetMyTickets)
+
+	req := httptest.NewRequest(http.MethodGet, "/tickets", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestGetMyTicketsEmpty(t *testing.T) {
+	mockSvc := new(MockTicketService)
+	ctrl := NewTicketController(mockSvc)
+
+	mockSvc.On("GetByUser", uint(10)).Return([]domain.Ticket{}, nil)
+
+	r := setupRouter()
+	r.GET("/tickets", setAuthContext("client", 10), ctrl.GetMyTickets)
+
+	req := httptest.NewRequest(http.MethodGet, "/tickets", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	var resp []ticketResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Len(t, resp, 0)
+}
+
+func TestTicketResponseWithEvent(t *testing.T) {
+	eventDate := time.Now()
+	ticket := &domain.Ticket{
+		ID:            1,
+		UserID:        10,
+		EventID:       1,
+		Status:        "active",
+		PurchasePrice: 50,
+		PurchasedAt:   time.Now(),
+		Event: domain.Event{
+			Title:     "Concert",
+			EventDate: eventDate,
+		},
+	}
+
+	resp := toTicketResponse(ticket)
+	assert.Equal(t, "Concert", resp.EventTitle)
+	assert.Equal(t, eventDate.Format(time.RFC3339), resp.EventDate)
+}
+
+func TestTicketResponseWithoutEvent(t *testing.T) {
+	ticket := &domain.Ticket{
+		ID:            1,
+		UserID:        10,
+		EventID:       1,
+		Status:        "active",
+		PurchasePrice: 50,
+		PurchasedAt:   time.Now(),
+	}
+
+	resp := toTicketResponse(ticket)
+	assert.Equal(t, "", resp.EventTitle)
+	assert.Equal(t, "", resp.EventDate)
 }

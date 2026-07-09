@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -178,5 +179,317 @@ func TestEventUpdate(t *testing.T) {
 
 		_, err := svc.Update(99, UpdateEventInput{})
 		assert.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("update multiple fields succeeds", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		existing := &domain.Event{ID: 1, Title: "Old", Capacity: 50, Price: 10.0, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		newTitle := "New Title"
+		newCat := "Rock"
+		newLoc := "Buenos Aires"
+		newDesc := "A great show"
+		newImg := "http://img.jpg"
+		cap := 200
+		price := 99.9
+		status := "presale"
+		eventDAO.On("Update", mock.MatchedBy(func(e *domain.Event) bool {
+			return e.Title == "New Title" && e.Capacity == 200 && e.Price == 99.9
+		})).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			Title:       &newTitle,
+			Category:    &newCat,
+			Location:    &newLoc,
+			Description: &newDesc,
+			ImageURL:    &newImg,
+			Capacity:    &cap,
+			Price:       &price,
+			Status:      &status,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "New Title", event.Title)
+		assert.Equal(t, 200, event.Capacity)
+	})
+
+	t.Run("update with presale active succeeds", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(48 * time.Hour)
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := true
+		presaleCode := "CODE123"
+		presaleStart := time.Now().Add(1 * time.Hour)
+		generalSale := time.Now().Add(24 * time.Hour)
+		presaleStartStr := presaleStart.Format(time.RFC3339)
+		generalSaleStr := generalSale.Format(time.RFC3339)
+
+		eventDAO.On("Update", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			PresaleActive:    &presaleActive,
+			PresaleCode:      &presaleCode,
+			PresaleStartDate: &presaleStartStr,
+			GeneralSaleDate:  &generalSaleStr,
+		})
+		require.NoError(t, err)
+		assert.True(t, event.PresaleActive)
+		assert.Equal(t, "CODE123", *event.PresaleCode)
+	})
+
+	t.Run("update presale active missing fields returns ErrInvalidInput", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(48 * time.Hour)
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := true
+		eventDAO.On("Update", mock.Anything).Return(nil)
+
+		_, err := svc.Update(1, UpdateEventInput{
+			PresaleActive: &presaleActive,
+		})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("update presale active invalid presale_start_date returns ErrInvalidInput", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(48 * time.Hour)
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := true
+		presaleCode := "CODE"
+		badDate := "not-a-date"
+		goodDate := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+
+		_, err := svc.Update(1, UpdateEventInput{
+			PresaleActive:    &presaleActive,
+			PresaleCode:      &presaleCode,
+			PresaleStartDate: &badDate,
+			GeneralSaleDate:  &goodDate,
+		})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("update presale active invalid general_sale_date returns ErrInvalidInput", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(48 * time.Hour)
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := true
+		presaleCode := "CODE"
+		goodStart := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+		badDate := "not-a-date"
+
+		_, err := svc.Update(1, UpdateEventInput{
+			PresaleActive:    &presaleActive,
+			PresaleCode:      &presaleCode,
+			PresaleStartDate: &goodStart,
+			GeneralSaleDate:  &badDate,
+		})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("update presale start after general sale returns ErrInvalidInput", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(48 * time.Hour)
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := true
+		presaleCode := "CODE"
+		presaleStart := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+		generalSale := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+
+		_, err := svc.Update(1, UpdateEventInput{
+			PresaleActive:    &presaleActive,
+			PresaleCode:      &presaleCode,
+			PresaleStartDate: &presaleStart,
+			GeneralSaleDate:  &generalSale,
+		})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("update presale general sale after event date returns ErrInvalidInput", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(2 * time.Hour)
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := true
+		presaleCode := "CODE"
+		presaleStart := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+		generalSale := time.Now().Add(3 * time.Hour).Format(time.RFC3339)
+
+		_, err := svc.Update(1, UpdateEventInput{
+			PresaleActive:    &presaleActive,
+			PresaleCode:      &presaleCode,
+			PresaleStartDate: &presaleStart,
+			GeneralSaleDate:  &generalSale,
+		})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("update presale active false clears presale fields", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		code := "OLD"
+		start := time.Now()
+		general := time.Now().Add(time.Hour)
+		existing := &domain.Event{
+			ID: 1, Status: "active",
+			PresaleActive: true, PresaleCode: &code,
+			PresaleStartDate: &start, GeneralSaleDate: &general,
+		}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		presaleActive := false
+		eventDAO.On("Update", mock.MatchedBy(func(e *domain.Event) bool {
+			return !e.PresaleActive && e.PresaleCode == nil && e.PresaleStartDate == nil && e.GeneralSaleDate == nil
+		})).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{PresaleActive: &presaleActive})
+		require.NoError(t, err)
+		assert.False(t, event.PresaleActive)
+		assert.Nil(t, event.PresaleCode)
+	})
+
+	t.Run("update individual presale fields without toggling", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		existing := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		newCode := "NEWCODE"
+		newStart := time.Now().Add(5 * time.Hour).Format(time.RFC3339)
+		newGeneral := time.Now().Add(10 * time.Hour).Format(time.RFC3339)
+
+		eventDAO.On("Update", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			PresaleCode:      &newCode,
+			PresaleStartDate: &newStart,
+			GeneralSaleDate:  &newGeneral,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "NEWCODE", *event.PresaleCode)
+	})
+
+	t.Run("update individual presale start date with invalid format is silently ignored", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		existing := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		badDate := "bad-format"
+		eventDAO.On("Update", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			PresaleStartDate: &badDate,
+		})
+		require.NoError(t, err)
+		assert.Nil(t, event.PresaleStartDate)
+	})
+
+	t.Run("update dao error returns error", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		existing := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		newTitle := "Updated"
+		eventDAO.On("Update", mock.Anything).Return(fmt.Errorf("db error"))
+
+		_, err := svc.Update(1, UpdateEventInput{Title: &newTitle})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("update general sale date with invalid format is silently ignored", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		existing := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		badDate := "bad-format"
+		eventDAO.On("Update", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			GeneralSaleDate: &badDate,
+		})
+		require.NoError(t, err)
+		assert.Nil(t, event.GeneralSaleDate)
+	})
+}
+
+func TestValidatePresaleConfig(t *testing.T) {
+	eventDate := time.Now().Add(48 * time.Hour)
+
+	t.Run("presale not active returns nil", func(t *testing.T) {
+		err := validatePresaleConfig(false, "", nil, nil, &eventDate)
+		assert.NoError(t, err)
+	})
+
+	t.Run("presale active with nil start date returns ErrInvalidInput", func(t *testing.T) {
+		general := time.Now().Add(24 * time.Hour)
+		err := validatePresaleConfig(true, "CODE", nil, &general, &eventDate)
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("presale active with nil general sale returns ErrInvalidInput", func(t *testing.T) {
+		start := time.Now().Add(1 * time.Hour)
+		err := validatePresaleConfig(true, "CODE", &start, nil, &eventDate)
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("presale active with empty code returns ErrInvalidInput", func(t *testing.T) {
+		start := time.Now().Add(1 * time.Hour)
+		general := time.Now().Add(24 * time.Hour)
+		err := validatePresaleConfig(true, "", &start, &general, &eventDate)
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("presale start after general sale returns ErrInvalidInput", func(t *testing.T) {
+		start := time.Now().Add(24 * time.Hour)
+		general := time.Now().Add(1 * time.Hour)
+		err := validatePresaleConfig(true, "CODE", &start, &general, &eventDate)
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("general sale after event date returns ErrInvalidInput", func(t *testing.T) {
+		start := time.Now().Add(1 * time.Hour)
+		general := time.Now().Add(100 * time.Hour)
+		err := validatePresaleConfig(true, "CODE", &start, &general, &eventDate)
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("valid presale config returns nil", func(t *testing.T) {
+		start := time.Now().Add(1 * time.Hour)
+		general := time.Now().Add(24 * time.Hour)
+		err := validatePresaleConfig(true, "CODE", &start, &general, &eventDate)
+		assert.NoError(t, err)
 	})
 }

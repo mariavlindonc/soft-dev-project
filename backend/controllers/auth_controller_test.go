@@ -3,10 +3,12 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"backend/domain"
 	"backend/services"
@@ -138,5 +140,92 @@ func TestLogin(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+}
+
+func TestRegisterTokenError(t *testing.T) {
+	t.Run("GenerateToken error returns 500", func(t *testing.T) {
+		mockSvc := new(MockAuthService)
+		ctrl := NewAuthController(mockSvc)
+
+		mockSvc.On("Register", mock.Anything).Return(&domain.User{ID: 1, Name: "A", Email: "a@test.com", Role: "client"}, nil)
+		mockSvc.On("GenerateToken", uint(1), "client").Return("", fmt.Errorf("token error"))
+
+		r := setupRouter()
+		r.POST("/register", ctrl.Register)
+
+		body := `{"name":"A","email":"a@test.com","password":"secure123"}`
+		req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("server error returns 500", func(t *testing.T) {
+		mockSvc := new(MockAuthService)
+		ctrl := NewAuthController(mockSvc)
+
+		mockSvc.On("Register", mock.Anything).Return(nil, fmt.Errorf("db error"))
+
+		r := setupRouter()
+		r.POST("/register", ctrl.Register)
+
+		body := `{"name":"A","email":"a@test.com","password":"secure123"}`
+		req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+}
+
+func TestUserFriendlyError(t *testing.T) {
+	t.Run("email already registered", func(t *testing.T) {
+		msg := userFriendlyError(fmt.Errorf("email is already registered"))
+		assert.Equal(t, "El correo electrónico ya está registrado", msg)
+	})
+
+	t.Run("password too short", func(t *testing.T) {
+		msg := userFriendlyError(fmt.Errorf("password must be at least 8 characters"))
+		assert.Equal(t, "La contraseña debe tener al menos 8 caracteres", msg)
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		msg := userFriendlyError(fmt.Errorf("something else"))
+		assert.Contains(t, msg, "Error interno")
+	})
+}
+
+func TestHelpers(t *testing.T) {
+	t.Run("isNotFound with not found error", func(t *testing.T) {
+		assert.True(t, isNotFound(services.ErrNotFound))
+	})
+
+	t.Run("isNotFound with other error", func(t *testing.T) {
+		assert.False(t, isNotFound(errors.New("not found")))
+	})
+
+	t.Run("optionalString empty returns nil", func(t *testing.T) {
+		assert.Nil(t, optionalString(""))
+	})
+
+	t.Run("optionalString non-empty returns pointer", func(t *testing.T) {
+		s := optionalString("hello")
+		require.NotNil(t, s)
+		assert.Equal(t, "hello", *s)
+	})
+
+	t.Run("timePtrToString nil returns nil", func(t *testing.T) {
+		assert.Nil(t, timePtrToString(nil))
+	})
+
+	t.Run("timePtrToString non-nil returns formatted string", func(t *testing.T) {
+		ts := time.Date(2026, 6, 15, 20, 0, 0, 0, time.UTC)
+		s := timePtrToString(&ts)
+		require.NotNil(t, s)
+		assert.Contains(t, *s, "2026")
 	})
 }

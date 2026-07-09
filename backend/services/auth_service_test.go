@@ -111,3 +111,17 @@ func TestLogin(t *testing.T) {
 		assert.ErrorIs(t, err, ErrUnauthorized)
 	})
 }
+
+func TestGenerateToken(t *testing.T) {
+	svc := NewAuthService(new(MockUserDAO))
+
+	token, err := svc.GenerateToken(1, "admin")
+	require.NoError(t, err)
+	assert.NotEmpty(t, token)
+}
+
+func TestNotFoundErr(t *testing.T) {
+	err := ErrNotFound
+	assert.Equal(t, "resource not found", err.Error())
+	assert.True(t, err.NotFound())
+}

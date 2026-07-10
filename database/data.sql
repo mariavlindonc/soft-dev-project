@@ -1,5 +1,8 @@
 USE ceibo_db;
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 -- Admin users (FK reference for events.created_by_id)
 -- Contraseñas personalizadas por usuario ([firstname]123)
 INSERT INTO users (name, email, password_hash, role) VALUES

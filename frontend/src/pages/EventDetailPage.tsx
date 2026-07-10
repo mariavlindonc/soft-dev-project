@@ -79,7 +79,8 @@ export default function EventDetailPage() {
   const isPresaleCodeRequired =
     saleStatus?.phase === 'presale' && saleStatus.message.toLowerCase().includes('code')
 
-  const eventImage = useMemo(getRandomEventImage, [])
+  const fallbackImage = useMemo(getRandomEventImage, [])
+  const eventImage = event?.image_url?.trim().startsWith('http') ? event.image_url!.trim() : fallbackImage
   const available = event ? event.capacity - event.tickets_sold : 0
 
   async function handlePurchase() {

@@ -1,5 +1,4 @@
 services:
-
   db:
     image: mysql:8.0
     command:
@@ -15,10 +14,11 @@ services:
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./database/data.sql:/docker-entrypoint-initdb.d/02-data.sql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-proot123" ]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
 
   backend:
     build: ./backend

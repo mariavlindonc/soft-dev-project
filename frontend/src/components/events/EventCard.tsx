@@ -32,7 +32,8 @@ function getBadge(event: Event): CardBadge {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const image = useMemo(getRandomEventImage, [])
+  const fallbackImage = useMemo(getRandomEventImage, [])
+  const image = event.image_url?.trim().startsWith('http') ? event.image_url!.trim() : fallbackImage
   const badge = getBadge(event)
 
   return (

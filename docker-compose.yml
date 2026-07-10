@@ -1,5 +1,4 @@
 services:
-
   db:
     image: mysql:8.0
     command:
@@ -14,11 +13,6 @@ services:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
       - ./database/data.sql:/docker-entrypoint-initdb.d/02-data.sql
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   backend:
     build: ./backend

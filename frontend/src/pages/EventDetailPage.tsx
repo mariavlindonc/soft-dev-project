@@ -76,8 +76,7 @@ export default function EventDetailPage() {
     return () => { cancelled = true }
   }, [id])
 
-  const isPresaleCodeRequired =
-    saleStatus?.phase === 'presale' && saleStatus.message.toLowerCase().includes('code')
+  const isPresaleCodeRequired = saleStatus?.phase === 'presale'
 
   const fallbackImage = useMemo(getRandomEventImage, [])
   const eventImage = event?.image_url?.trim().startsWith('http') ? event.image_url!.trim() : fallbackImage
@@ -220,7 +219,7 @@ export default function EventDetailPage() {
                   <p className="alert alert-info">{saleStatus.message}</p>
                 )}
 
-                {saleStatus?.phase === 'presale' && isPresaleCodeRequired && (
+                {isPresaleCodeRequired && (
                   <div className="form-group">
                     <label htmlFor="presaleCode">Código de preventa</label>
                     <input

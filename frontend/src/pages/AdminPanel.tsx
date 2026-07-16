@@ -321,8 +321,8 @@ function AdminEventForm() {
           <>
             <div className="admin-form-row">
               <div className="form-group">
-                <label htmlFor="presale_code">Código de preventa</label>
-                <input id="presale_code" value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
+                <label htmlFor="presale_code">Código de preventa *</label>
+                <input id="presale_code" required={form.presale_active} placeholder={isEdit ? "Reingresar el código" : ""} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
               </div>
               <div className="form-group">
                 <label htmlFor="presale_start_date">Inicio preventa</label>

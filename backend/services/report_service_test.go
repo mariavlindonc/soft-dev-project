@@ -2,11 +2,13 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"backend/domain"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,6 +48,63 @@ func TestGetEventReport(t *testing.T) {
 		_, err := svc.GetEventReport(99)
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
+
+	t.Run("count error propagates", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		ticketDAO := new(MockTicketDAO)
+		svc := NewReportService(eventDAO, ticketDAO, new(MockUserDAO))
+
+		eventDAO.On("FindByID", uint(1)).Return(&domain.Event{ID: 1}, nil)
+		ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, fmt.Errorf("count error"))
+
+		_, err := svc.GetEventReport(1)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "count error")
+	})
+
+	t.Run("find active tickets error is silently ignored", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		ticketDAO := new(MockTicketDAO)
+		svc := NewReportService(eventDAO, ticketDAO, new(MockUserDAO))
+
+		eventDAO.On("FindByID", uint(1)).Return(&domain.Event{ID: 1, Title: "Concert", Capacity: 100}, nil)
+		ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
+		ticketDAO.On("FindActiveByEvent", uint(1)).Return([]domain.Ticket{}, fmt.Errorf("find error"))
+
+		report, err := svc.GetEventReport(1)
+		require.NoError(t, err)
+		assert.Empty(t, report.Buyers)
+	})
+
+	t.Run("capacity zero does not cause division by zero", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		ticketDAO := new(MockTicketDAO)
+		svc := NewReportService(eventDAO, ticketDAO, new(MockUserDAO))
+
+		eventDAO.On("FindByID", uint(1)).Return(&domain.Event{ID: 1, Title: "Free", Capacity: 0}, nil)
+		ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
+		ticketDAO.On("FindActiveByEvent", uint(1)).Return([]domain.Ticket{}, nil)
+
+		report, err := svc.GetEventReport(1)
+		require.NoError(t, err)
+		assert.Equal(t, 0.0, report.Occupancy)
+	})
+
+	t.Run("find user error is silently ignored in buyers", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		ticketDAO := new(MockTicketDAO)
+		userDAO := new(MockUserDAO)
+		svc := NewReportService(eventDAO, ticketDAO, userDAO)
+
+		eventDAO.On("FindByID", uint(1)).Return(&domain.Event{ID: 1, Title: "Concert", Capacity: 100}, nil)
+		ticketDAO.On("CountActiveByEvent", uint(1)).Return(1, nil)
+		ticketDAO.On("FindActiveByEvent", uint(1)).Return([]domain.Ticket{{UserID: 10}}, nil)
+		userDAO.On("FindByID", uint(10)).Return(nil, fmt.Errorf("user error"))
+
+		report, err := svc.GetEventReport(1)
+		require.NoError(t, err)
+		assert.Empty(t, report.Buyers)
+	})
 }
 
 func TestGetGlobalReport(t *testing.T) {
@@ -65,4 +124,28 @@ func TestGetGlobalReport(t *testing.T) {
 	assert.Equal(t, 2, report.TotalEvents)
 	assert.Equal(t, 150, report.TotalTicketsSold)
 	assert.Len(t, report.EventReports, 2)
+}
+
+func TestGetGlobalReportFindAllError(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	svc := NewReportService(eventDAO, new(MockTicketDAO), new(MockUserDAO))
+
+	eventDAO.On("FindAll", mock.Anything).Return([]domain.Event{}, fmt.Errorf("findall error"))
+
+	_, err := svc.GetGlobalReport()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "findall error")
+}
+
+func TestGetGlobalReportCountError(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	svc := NewReportService(eventDAO, ticketDAO, new(MockUserDAO))
+
+	eventDAO.On("FindAll", mock.Anything).Return([]domain.Event{{ID: 1, Title: "E1", Capacity: 100}}, nil)
+	ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, fmt.Errorf("count error"))
+
+	_, err := svc.GetGlobalReport()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "count error")
 }

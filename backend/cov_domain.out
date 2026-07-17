@@ -1,8 +1,0 @@
-mode: set
-backend/domain/event.go:43.59,44.79 1 1
-backend/domain/event.go:44.79,46.3 1 1
-backend/domain/event.go:47.2,47.37 1 1
-backend/domain/event.go:47.37,49.3 1 1
-backend/domain/event.go:50.2,50.36 1 1
-backend/domain/event.go:50.36,52.3 1 1
-backend/domain/event.go:53.2,53.20 1 1

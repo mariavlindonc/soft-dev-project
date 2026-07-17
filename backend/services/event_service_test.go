@@ -100,6 +100,76 @@ func TestEventCreate(t *testing.T) {
 		})
 		assert.ErrorIs(t, err, ErrInvalidInput)
 	})
+
+	t.Run("with presale validation error propagates", func(t *testing.T) {
+		svc := NewEventService(new(MockEventDAO), new(MockTicketDAO))
+		_, err := svc.Create(CreateEventInput{
+			Title:         "Event",
+			Date:          time.Now().Add(48 * time.Hour),
+			Capacity:      100,
+			PresaleActive: true,
+		})
+		assert.ErrorIs(t, err, ErrInvalidInput)
+	})
+
+	t.Run("with presale active creates successfully", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDAO.On("Create", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		presaleStart := time.Now().Add(1 * time.Hour)
+		generalSale := time.Now().Add(24 * time.Hour)
+		event, err := svc.Create(CreateEventInput{
+			Title:            "Presale Event",
+			Date:             time.Now().Add(48 * time.Hour),
+			Capacity:         100,
+			Price:            50,
+			PresaleActive:    true,
+			PresaleCode:      "CODE123",
+			PresaleStartDate: &presaleStart,
+			GeneralSaleDate:  &generalSale,
+		})
+		require.NoError(t, err)
+		assert.True(t, event.PresaleActive)
+		assert.Equal(t, "CODE123", *event.PresaleCode)
+	})
+
+	t.Run("dao error on create propagates", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDAO.On("Create", mock.AnythingOfType("*domain.Event")).Return(fmt.Errorf("db error"))
+
+		_, err := svc.Create(CreateEventInput{
+			Title:    "Event",
+			Date:     time.Now().Add(48 * time.Hour),
+			Capacity: 100,
+		})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
+	})
+
+	t.Run("with optional string fields creates successfully", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDAO.On("Create", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		desc := "A great show"
+		event, err := svc.Create(CreateEventInput{
+			Title:       "Concert",
+			Date:        time.Now().Add(48 * time.Hour),
+			Capacity:    100,
+			Description: desc,
+			Category:    "Rock",
+			Location:    "Stadium",
+			ImageURL:    "http://img.jpg",
+		})
+		require.NoError(t, err)
+		assert.Equal(t, "A great show", *event.Description)
+		assert.Equal(t, "Rock", *event.Category)
+	})
 }
 
 func TestEventCancel(t *testing.T) {
@@ -139,6 +209,34 @@ func TestEventCancel(t *testing.T) {
 
 		err := svc.Cancel(99)
 		assert.ErrorIs(t, err, ErrNotFound)
+	})
+
+	t.Run("cancel Update error propagates", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		event := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(event, nil)
+		eventDAO.On("Update", mock.Anything).Return(fmt.Errorf("update error"))
+
+		err := svc.Cancel(1)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "update error")
+	})
+
+	t.Run("cancel ticket cancellation error propagates", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		ticketDAO := new(MockTicketDAO)
+		svc := NewEventService(eventDAO, ticketDAO)
+
+		event := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(event, nil)
+		eventDAO.On("Update", mock.Anything).Return(nil)
+		ticketDAO.On("CancelByEvent", uint(1)).Return(fmt.Errorf("db error"))
+
+		err := svc.Cancel(1)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "db error")
 	})
 }
 
@@ -410,6 +508,26 @@ func TestEventUpdate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Nil(t, event.PresaleStartDate)
+	})
+
+	t.Run("update date and duration succeeds", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		existing := &domain.Event{ID: 1, Status: "active"}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+
+		newDate := time.Now().Add(72 * time.Hour)
+		newDuration := 180
+		eventDAO.On("Update", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			Date:     &newDate,
+			Duration: &newDuration,
+		})
+		require.NoError(t, err)
+		assert.True(t, event.EventDate.Equal(newDate))
+		assert.Equal(t, 180, event.DurationMinutes)
 	})
 
 	t.Run("update dao error returns error", func(t *testing.T) {

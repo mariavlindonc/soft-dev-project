@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var osExit = os.Exit
+
 type Level string
 
 const (
@@ -44,5 +46,5 @@ func Debug(msg string, args ...interface{}) { log(LevelDebug, msg, args...) }
 
 func Fatal(msg string, args ...interface{}) {
 	log(LevelFatal, msg, args...)
-	os.Exit(1)
+	osExit(1)
 }

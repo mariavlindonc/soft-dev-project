@@ -266,8 +266,10 @@ docker-compose exec backend go test ./... -v -cover
 | Paquete        | Tipo                              | Cobertura |
 | -------------- | --------------------------------- | :-------: |
 | `domain/`      | Unitario (puro, sin dependencias) |  100.0%   |
-| `utils/`       | Unitario (puro)                   |   86.4%   |
-| `services/`    | Unitario (con testify/mock)       |   92.2%   |
+| `utils/`       | Unitario (puro)                   |   90.9%   |
+| `clients/`     | Unitario (con testify/mock)       |   93.5%   |
+| `logger/`      | Unitario (con testify)            |  100.0%   |
+| `services/`    | Unitario (con testify/mock)       |   99.3%   |
 | `controllers/` | Integracion (httptest)            |   95.2%   |
 
 ### Estrategia de testing
@@ -292,12 +294,12 @@ docker-compose exec backend go test ./... -v -cover
 
 ### Tests de servicios
 
-| Archivo                  | Casos cubiertos                                                                                                                                                                                                                                                            |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth_service_test.go`   | Register (exito, password corta, email duplicado), Login (exito, password incorrecta, email desconocido), GenerateToken, NotFound error                                                                                                                                              |
-| `event_service_test.go`  | GetAll, GetByID (exito, no encontrado), Create (valido, titulo vacio, capacidad cero, fecha pasada, DAO error), Cancel (activo, ya cancelado, no encontrado), Update (exito, cancelado, no encontrado, multiples campos, presale activo/inactivo, fechas invalidas, DAO error), validatePresaleConfig (todas las ramas) |
-| `ticket_service_test.go` | Purchase (exito, evento cancelado, sin capacidad, fase no abierta, no encontrado), PurchasePresale (codigo correcto, sin codigo, codigo incorrecto), CancelTicket (propio, ajeno, ya cancelado, no encontrado), Transfer (a otro usuario, a si mismo, ticket no encontrado, no propio, ya cancelado, ya transferido, target no encontrado), GetByUser, emails (user/event not found, send fails), toTicketInfo |
-| `report_service_test.go` | GetEventReport (exito, no encontrado), GetGlobalReport (exito, error count)                                                                                                                                                                                               |
+| Archivo                  | Casos cubiertos                                                                                                                                                                                                                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth_service_test.go`   | Register (exito, password corta, email duplicado, error de conexion en busqueda, error de creacion), Login (exito, password incorrecta, email desconocido), GenerateToken, NotFound error                                                                                            |
+| `event_service_test.go`  | GetAll, GetByID (exito, no encontrado), Create (valido, titulo vacio, capacidad cero, fecha pasada, presale activo, presale invalido, DAO error, campos opcionales), Cancel (activo, ya cancelado, no encontrado, error en Update, error en CancelByEvent), Update (exito, cancelado, no encontrado, multiples campos, Date/Duration, presale activo/inactivo, fechas invalidas, DAO error), validatePresaleConfig (todas las ramas) |
+| `ticket_service_test.go` | Purchase (exito, quantity 0 default, evento cancelado, sin capacidad, count error, create tx error, fase no abierta, no encontrado), PurchasePresale (codigo correcto, sin codigo, codigo incorrecto), CancelTicket (propio, ajeno, ya cancelado, save tx error, no encontrado), Transfer (a otro usuario, a si mismo, save tx error, ticket no encontrado, no propio, ya cancelado, ya transferido, target no encontrado), GetByUser, emails (user/event not found, send fails), toTicketInfo |
+| `report_service_test.go` | GetEventReport (exito, no encontrado, count error, findActive error ignorado, capacity 0, findUser error ignorado), GetGlobalReport (exito, FindAll error, count error)                                                                                                            |
 
 ### Tests de controladores
 

@@ -55,57 +55,68 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">backend/clients/email_client.go (0.0%)</option>
+				<option value="file0">backend/clients/email_client.go (93.5%)</option>
 				
-				<option value="file1">backend/cmd/gencerts/main.go (0.0%)</option>
+				<option value="file1">backend/cmd/gencerts/gencerts.go (84.2%)</option>
 				
-				<option value="file2">backend/controllers/admin_controller.go (76.9%)</option>
+				<option value="file2">backend/cmd/gencerts/main.go (0.0%)</option>
 				
-				<option value="file3">backend/controllers/auth_controller.go (81.2%)</option>
+				<option value="file3">backend/controllers/admin_controller.go (100.0%)</option>
 				
-				<option value="file4">backend/controllers/auth_middleware.go (86.4%)</option>
+				<option value="file4">backend/controllers/auth_controller.go (100.0%)</option>
 				
-				<option value="file5">backend/controllers/event_controller.go (51.4%)</option>
+				<option value="file5">backend/controllers/auth_middleware.go (86.4%)</option>
 				
-				<option value="file6">backend/controllers/helpers.go (88.9%)</option>
+				<option value="file6">backend/controllers/event_controller.go (92.1%)</option>
 				
-				<option value="file7">backend/controllers/ticket_controller.go (71.7%)</option>
+				<option value="file7">backend/controllers/helpers.go (100.0%)</option>
 				
-				<option value="file8">backend/dao/connection.go (0.0%)</option>
+				<option value="file8">backend/controllers/ticket_controller.go (100.0%)</option>
 				
-				<option value="file9">backend/dao/event_dao.go (0.0%)</option>
+				<option value="file9">backend/dao/connection.go (4.4%)</option>
 				
-				<option value="file10">backend/dao/ticket_dao.go (0.0%)</option>
+				<option value="file10">backend/dao/event_dao.go (96.4%)</option>
 				
-				<option value="file11">backend/dao/user_dao.go (0.0%)</option>
+				<option value="file11">backend/dao/ticket_dao.go (88.5%)</option>
 				
-				<option value="file12">backend/domain/event.go (100.0%)</option>
+				<option value="file12">backend/dao/user_dao.go (100.0%)</option>
 				
-				<option value="file13">backend/logger/logger.go (0.0%)</option>
+				<option value="file13">backend/domain/event.go (100.0%)</option>
 				
-				<option value="file14">backend/main.go (0.0%)</option>
+				<option value="file14">backend/logger/logger.go (100.0%)</option>
 				
-				<option value="file15">backend/services/auth_service.go (82.1%)</option>
+				<option value="file15">backend/main.go (38.1%)</option>
 				
-				<option value="file16">backend/services/errors.go (50.0%)</option>
+				<option value="file16">backend/services/auth_service.go (92.9%)</option>
 				
-				<option value="file17">backend/services/event_service.go (51.0%)</option>
+				<option value="file17">backend/services/errors.go (100.0%)</option>
 				
-				<option value="file18">backend/services/report_service.go (90.6%)</option>
+				<option value="file18">backend/services/event_service.go (100.0%)</option>
 				
-				<option value="file19">backend/services/ticket_service.go (73.5%)</option>
+				<option value="file19">backend/services/report_service.go (100.0%)</option>
 				
-				<option value="file20">backend/utils/jwt.go (88.2%)</option>
+				<option value="file20">backend/services/ticket_service.go (100.0%)</option>
 				
-				<option value="file21">backend/utils/password.go (80.0%)</option>
+				<option value="file21">backend/utils/jwt.go (94.1%)</option>
+				
+				<option value="file22">backend/utils/password.go (80.0%)</option>
 				
 				</select>
 			</div>
 			<div id="legend">
 				<span>not tracked</span>
 			
-				<span class="cov0">not covered</span>
-				<span class="cov8">covered</span>
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
 			
 			</div>
 		</div>
@@ -149,10 +160,10 @@ type EmailClient interface {
 //
 //        "smtp" – sends via an SMTP server (configure SMTP_HOST, SMTP_PORT, etc.)
 //        ""      – logs to stdout (development default, no external dependency)
-func NewEmailClient() EmailClient <span class="cov0" title="0">{
+func NewEmailClient() EmailClient <span class="cov10" title="4">{
         provider := os.Getenv("EMAIL_PROVIDER")
         switch provider </span>{
-        case "smtp":<span class="cov0" title="0">
+        case "smtp":<span class="cov1" title="1">
                 return &amp;smtpEmailClient{
                         host:     os.Getenv("SMTP_HOST"),
                         port:     os.Getenv("SMTP_PORT"),
@@ -160,7 +171,7 @@ func NewEmailClient() EmailClient <span class="cov0" title="0">{
                         password: os.Getenv("SMTP_PASSWORD"),
                         from:     os.Getenv("EMAIL_FROM"),
                 }</span>
-        default:<span class="cov0" title="0">
+        default:<span class="cov8" title="3">
                 return &amp;logEmailClient{}</span>
         }
 }
@@ -168,17 +179,17 @@ func NewEmailClient() EmailClient <span class="cov0" title="0">{
 // Log client (development / fallback)
 type logEmailClient struct{}
 
-func (c *logEmailClient) SendPurchaseConfirmation(to string, ticket TicketInfo) error <span class="cov0" title="0">{
+func (c *logEmailClient) SendPurchaseConfirmation(to string, ticket TicketInfo) error <span class="cov1" title="1">{
         logger.Info("email purchase confirmation to=%s event=%s ticket=%d", to, ticket.EventTitle, ticket.TicketID)
         return nil
 }</span>
 
-func (c *logEmailClient) SendCancellationNotice(to string, ticket TicketInfo) error <span class="cov0" title="0">{
+func (c *logEmailClient) SendCancellationNotice(to string, ticket TicketInfo) error <span class="cov1" title="1">{
         logger.Info("email cancellation notice to=%s event=%s ticket=%d", to, ticket.EventTitle, ticket.TicketID)
         return nil
 }</span>
 
-func (c *logEmailClient) SendTransferNotice(from, to string, ticket TicketInfo) error <span class="cov0" title="0">{
+func (c *logEmailClient) SendTransferNotice(from, to string, ticket TicketInfo) error <span class="cov1" title="1">{
         logger.Info("email transfer notice from=%s to=%s event=%s ticket=%d", from, to, ticket.EventTitle, ticket.TicketID)
         return nil
 }</span>
@@ -192,7 +203,7 @@ type smtpEmailClient struct {
         from     string
 }
 
-func (c *smtpEmailClient) SendPurchaseConfirmation(to string, ticket TicketInfo) error <span class="cov0" title="0">{
+func (c *smtpEmailClient) SendPurchaseConfirmation(to string, ticket TicketInfo) error <span class="cov1" title="1">{
         subject := "Purchase Confirmed – Ceibo Tickets"
         body := fmt.Sprintf(`Hi,
 
@@ -210,7 +221,7 @@ Ceibo Tickets`, ticket.EventTitle, ticket.EventTitle, ticket.EventDate, ticket.L
         return c.send(to, subject, body)
 }</span>
 
-func (c *smtpEmailClient) SendCancellationNotice(to string, ticket TicketInfo) error <span class="cov0" title="0">{
+func (c *smtpEmailClient) SendCancellationNotice(to string, ticket TicketInfo) error <span class="cov1" title="1">{
         subject := "Ticket Cancelled – Ceibo Tickets"
         body := fmt.Sprintf(`Hi,
 
@@ -226,7 +237,7 @@ Ceibo Tickets`, ticket.EventTitle, ticket.EventTitle, ticket.EventDate, ticket.T
         return c.send(to, subject, body)
 }</span>
 
-func (c *smtpEmailClient) SendTransferNotice(from, to string, ticket TicketInfo) error <span class="cov0" title="0">{
+func (c *smtpEmailClient) SendTransferNotice(from, to string, ticket TicketInfo) error <span class="cov1" title="1">{
         subject := "Ticket Transferred – Ceibo Tickets"
         body := fmt.Sprintf(`Hi,
 
@@ -242,7 +253,7 @@ Ceibo Tickets`, ticket.EventTitle, from, ticket.EventTitle, ticket.EventDate, ti
         return c.send(to, subject, body)
 }</span>
 
-func (c *smtpEmailClient) send(to, subject, body string) error <span class="cov0" title="0">{
+func (c *smtpEmailClient) send(to, subject, body string) error <span class="cov8" title="3">{
         const sendTimeout = 30 * time.Second
 
         addr := fmt.Sprintf("%s:%s", c.host, c.port)
@@ -250,13 +261,13 @@ func (c *smtpEmailClient) send(to, subject, body string) error <span class="cov0
         msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s", c.from, to, subject, body)
 
         errCh := make(chan error, 1)
-        go func() </span><span class="cov0" title="0">{
+        go func() </span><span class="cov8" title="3">{
                 errCh &lt;- smtp.SendMail(addr, auth, c.from, []string{to}, []byte(msg))
         }</span>()
 
-        <span class="cov0" title="0">select </span>{
-        case err := &lt;-errCh:<span class="cov0" title="0">
-                if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="3">select </span>{
+        case err := &lt;-errCh:<span class="cov8" title="3">
+                if err != nil </span><span class="cov8" title="3">{
                         return fmt.Errorf("email client: send mail: %w", err)
                 }</span>
                 <span class="cov0" title="0">return nil</span>
@@ -280,16 +291,17 @@ import (
         "encoding/pem"
         "math/big"
         "os"
+        "path/filepath"
         "time"
 )
 
-func main() <span class="cov0" title="0">{
+func generateCertAndKey() (*x509.Certificate, *rsa.PrivateKey, error) <span class="cov10" title="3">{
         key, err := rsa.GenerateKey(rand.Reader, 2048)
         if err != nil </span><span class="cov0" title="0">{
-                panic(err)</span>
-        }
+                return nil, nil, err
+        }</span>
 
-        <span class="cov0" title="0">template := x509.Certificate{
+        <span class="cov10" title="3">template := x509.Certificate{
                 SerialNumber: big.NewInt(time.Now().Unix()),
                 Subject: pkix.Name{
                         Country:      []string{"AR"},
@@ -305,33 +317,70 @@ func main() <span class="cov0" title="0">{
                 BasicConstraintsValid: true,
                 DNSNames:              []string{"localhost", "backend"},
         }
+        return &amp;template, key, nil</span>
+}
 
-        pub := key.Public()
-        certDER, err := x509.CreateCertificate(rand.Reader, &amp;template, &amp;template, pub, key)
-        if err != nil </span><span class="cov0" title="0">{
-                panic(err)</span>
-        }
+func createCertDER(template *x509.Certificate, key *rsa.PrivateKey) ([]byte, error) <span class="cov6" title="2">{
+        return x509.CreateCertificate(rand.Reader, template, template, key.Public(), key)
+}</span>
 
-        <span class="cov0" title="0">certOut, err := os.Create("certs/server.crt")
+func writeCertFiles(dir string, certDER []byte, key *rsa.PrivateKey) error <span class="cov1" title="1">{
+        certPath := filepath.Join(dir, "server.crt")
+        keyPath := filepath.Join(dir, "server.key")
+
+        certOut, err := os.Create(certPath)
         if err != nil </span><span class="cov0" title="0">{
-                panic(err)</span>
-        }
-        <span class="cov0" title="0">defer certOut.Close()
+                return err
+        }</span>
+        <span class="cov1" title="1">defer certOut.Close()
         pem.Encode(certOut, &amp;pem.Block{Type: "CERTIFICATE", Bytes: certDER})
 
-        keyOut, err := os.Create("certs/server.key")
+        keyOut, err := os.Create(keyPath)
         if err != nil </span><span class="cov0" title="0">{
-                panic(err)</span>
-        }
-        <span class="cov0" title="0">defer keyOut.Close()
+                return err
+        }</span>
+        <span class="cov1" title="1">defer keyOut.Close()
         pem.Encode(keyOut, &amp;pem.Block{
                 Type:  "RSA PRIVATE KEY",
                 Bytes: x509.MarshalPKCS1PrivateKey(key),
-        })</span>
+        })
+
+        return nil</span>
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package controllers
+		<pre class="file" id="file2" style="display: none">package main
+
+import (
+        "os"
+
+        "backend/logger"
+)
+
+func main() <span class="cov0" title="0">{
+        template, key, err := generateCertAndKey()
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+
+        <span class="cov0" title="0">certDER, err := createCertDER(template, key)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+
+        <span class="cov0" title="0">if err := os.MkdirAll("certs", 0755); err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+
+        <span class="cov0" title="0">if err := writeCertFiles("certs", certDER, key); err != nil </span><span class="cov0" title="0">{
+                panic(err)</span>
+        }
+
+        <span class="cov0" title="0">logger.Info("certificates generated in certs/")</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package controllers
 
 import (
         "net/http"
@@ -346,7 +395,7 @@ type AdminController struct {
         reportService services.ReportServiceInterface
 }
 
-func NewAdminController(s services.ReportServiceInterface) *AdminController <span class="cov8" title="1">{
+func NewAdminController(s services.ReportServiceInterface) *AdminController <span class="cov10" title="6">{
         return &amp;AdminController{reportService: s}
 }</span>
 
@@ -364,14 +413,14 @@ type globalReportResponse struct {
         Events           []eventSummary `json:"events"`
 }
 
-func toGlobalReportResponse(report *services.GlobalReport) globalReportResponse <span class="cov8" title="1">{
+func toGlobalReportResponse(report *services.GlobalReport) globalReportResponse <span class="cov4" title="2">{
         resp := globalReportResponse{
                 TotalEvents:      report.TotalEvents,
                 TotalTicketsSold: report.TotalTicketsSold,
                 Events:           make([]eventSummary, 0, len(report.EventReports)),
         }
 
-        for _, e := range report.EventReports </span><span class="cov8" title="1">{
+        for _, e := range report.EventReports </span><span class="cov6" title="3">{
                 resp.Events = append(resp.Events, eventSummary{
                         EventID:     e.EventID,
                         Title:       e.EventTitle,
@@ -381,7 +430,7 @@ func toGlobalReportResponse(report *services.GlobalReport) globalReportResponse 
                 })
         }</span>
 
-        <span class="cov8" title="1">return resp</span>
+        <span class="cov4" title="2">return resp</span>
 }
 
 type buyerInfoResponse struct {
@@ -399,7 +448,7 @@ type eventReportResponse struct {
         Buyers        []buyerInfoResponse `json:"buyers"`
 }
 
-func toEventReportResponse(report *services.EventReport) eventReportResponse <span class="cov8" title="1">{
+func toEventReportResponse(report *services.EventReport) eventReportResponse <span class="cov4" title="2">{
         resp := eventReportResponse{
                 EventID:     report.EventID,
                 Title:       report.EventTitle,
@@ -408,48 +457,48 @@ func toEventReportResponse(report *services.EventReport) eventReportResponse <sp
                 Occupancy:   report.Occupancy,
                 Buyers:      make([]buyerInfoResponse, 0, len(report.Buyers)),
         }
-        for _, b := range report.Buyers </span><span class="cov8" title="1">{
+        for _, b := range report.Buyers </span><span class="cov6" title="3">{
                 resp.Buyers = append(resp.Buyers, buyerInfoResponse{
                         UserID: b.UserID,
                         Name:   b.Name,
                         Email:  b.Email,
                 })
         }</span>
-        <span class="cov8" title="1">return resp</span>
+        <span class="cov4" title="2">return resp</span>
 }
 
-func (h *AdminController) GetReports(c *gin.Context) <span class="cov8" title="1">{
+func (h *AdminController) GetReports(c *gin.Context) <span class="cov4" title="2">{
         report, err := h.reportService.GetGlobalReport()
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, toGlobalReportResponse(report))</span>
+        <span class="cov1" title="1">c.JSON(http.StatusOK, toGlobalReportResponse(report))</span>
 }
 
-func (h *AdminController) GetEventReport(c *gin.Context) <span class="cov8" title="1">{
+func (h *AdminController) GetEventReport(c *gin.Context) <span class="cov7" title="4">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">report, err := h.reportService.GetEventReport(uint(id))
-        if err != nil </span><span class="cov8" title="1">{
-                if isNotFound(err) </span><span class="cov8" title="1">{
+        <span class="cov6" title="3">report, err := h.reportService.GetEventReport(uint(id))
+        if err != nil </span><span class="cov4" title="2">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, toEventReportResponse(report))</span>
+        <span class="cov1" title="1">c.JSON(http.StatusOK, toEventReportResponse(report))</span>
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package controllers
+		<pre class="file" id="file4" style="display: none">package controllers
 
 import (
         "errors"
@@ -465,7 +514,7 @@ type AuthController struct {
         authService services.AuthServiceInterface
 }
 
-func NewAuthController(s services.AuthServiceInterface) *AuthController <span class="cov8" title="1">{
+func NewAuthController(s services.AuthServiceInterface) *AuthController <span class="cov10" title="8">{
         return &amp;AuthController{authService: s}
 }</span>
 
@@ -497,45 +546,45 @@ type loginResponse struct {
         User  userResponse `json:"user"`
 }
 
-func userFriendlyError(err error) string <span class="cov8" title="1">{
+func userFriendlyError(err error) string <span class="cov7" title="5">{
         msg := err.Error()
-        if strings.Contains(msg, "email is already registered") </span><span class="cov0" title="0">{
+        if strings.Contains(msg, "email is already registered") </span><span class="cov1" title="1">{
                 return "El correo electrónico ya está registrado"
         }</span>
-        <span class="cov8" title="1">if strings.Contains(msg, "password must be at least 8 characters") </span><span class="cov0" title="0">{
+        <span class="cov7" title="4">if strings.Contains(msg, "password must be at least 8 characters") </span><span class="cov1" title="1">{
                 return "La contraseña debe tener al menos 8 caracteres"
         }</span>
-        <span class="cov8" title="1">return "Error interno del servidor. Intentá de nuevo."</span>
+        <span class="cov5" title="3">return "Error interno del servidor. Intentá de nuevo."</span>
 }
 
-func (h *AuthController) Register(c *gin.Context) <span class="cov8" title="1">{
+func (h *AuthController) Register(c *gin.Context) <span class="cov7" title="5">{
         var req registerRequest
-        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "Verificá los datos ingresados"})
                 return
         }</span>
 
-        <span class="cov8" title="1">user, err := h.authService.Register(services.RegisterInput{
+        <span class="cov7" title="4">user, err := h.authService.Register(services.RegisterInput{
                 Name:     req.Name,
                 Email:    req.Email,
                 Password: req.Password,
         })
-        if err != nil </span><span class="cov8" title="1">{
-                if errors.Is(err, services.ErrInvalidInput) </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov4" title="2">{
+                if errors.Is(err, services.ErrInvalidInput) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusBadRequest, gin.H{"error": userFriendlyError(err)})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": userFriendlyError(err)})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": userFriendlyError(err)})
                 return</span>
         }
 
-        <span class="cov8" title="1">token, err := h.authService.GenerateToken(user.ID, user.Role)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov4" title="2">token, err := h.authService.GenerateToken(user.ID, user.Role)
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear la cuenta. Intentá de nuevo."})
                 return
         }</span>
 
-        <span class="cov8" title="1">c.JSON(http.StatusCreated, registerResponse{
+        <span class="cov1" title="1">c.JSON(http.StatusCreated, registerResponse{
                 Token: token,
                 User: userResponse{
                         ID:    user.ID,
@@ -546,23 +595,23 @@ func (h *AuthController) Register(c *gin.Context) <span class="cov8" title="1">{
         })</span>
 }
 
-func (h *AuthController) Login(c *gin.Context) <span class="cov8" title="1">{
+func (h *AuthController) Login(c *gin.Context) <span class="cov5" title="3">{
         var req loginRequest
-        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "Verificá los datos ingresados"})
                 return
         }</span>
 
-        <span class="cov8" title="1">token, user, err := h.authService.Login(services.LoginInput{
+        <span class="cov4" title="2">token, user, err := h.authService.Login(services.LoginInput{
                 Email:    req.Email,
                 Password: req.Password,
         })
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusUnauthorized, gin.H{"error": "Correo o contraseña incorrectos"})
                 return
         }</span>
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, loginResponse{
+        <span class="cov1" title="1">c.JSON(http.StatusOK, loginResponse{
                 Token: token,
                 User: userResponse{
                         ID:    user.ID,
@@ -574,7 +623,7 @@ func (h *AuthController) Login(c *gin.Context) <span class="cov8" title="1">{
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package controllers
+		<pre class="file" id="file5" style="display: none">package controllers
 
 import (
         "net/http"
@@ -585,22 +634,22 @@ import (
         "github.com/gin-gonic/gin"
 )
 
-func AuthRequired() gin.HandlerFunc <span class="cov8" title="1">{
-        return func(c *gin.Context) </span><span class="cov8" title="1">{
+func AuthRequired() gin.HandlerFunc <span class="cov10" title="3">{
+        return func(c *gin.Context) </span><span class="cov10" title="3">{
                 authHeader := c.GetHeader("Authorization")
-                if authHeader == "" </span><span class="cov8" title="1">{
+                if authHeader == "" </span><span class="cov1" title="1">{
                         c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authorization header required"})
                         return
                 }</span>
 
-                <span class="cov8" title="1">parts := strings.SplitN(authHeader, " ", 2)
-                if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov8" title="1">{
+                <span class="cov6" title="2">parts := strings.SplitN(authHeader, " ", 2)
+                if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov1" title="1">{
                         c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization format, use Bearer &lt;token&gt;"})
                         return
                 }</span>
 
-                <span class="cov8" title="1">claims, err := utils.ValidateToken(parts[1])
-                if err != nil </span><span class="cov8" title="1">{
+                <span class="cov1" title="1">claims, err := utils.ValidateToken(parts[1])
+                if err != nil </span><span class="cov1" title="1">{
                         c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
                         return
                 }</span>
@@ -611,19 +660,19 @@ func AuthRequired() gin.HandlerFunc <span class="cov8" title="1">{
         }
 }
 
-func AdminRequired() gin.HandlerFunc <span class="cov8" title="1">{
-        return func(c *gin.Context) </span><span class="cov8" title="1">{
+func AdminRequired() gin.HandlerFunc <span class="cov10" title="3">{
+        return func(c *gin.Context) </span><span class="cov10" title="3">{
                 role, exists := c.Get("role")
-                if !exists || role.(string) != "admin" </span><span class="cov8" title="1">{
+                if !exists || role.(string) != "admin" </span><span class="cov6" title="2">{
                         c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "admin access required"})
                         return
                 }</span>
-                <span class="cov8" title="1">c.Next()</span>
+                <span class="cov1" title="1">c.Next()</span>
         }
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package controllers
+		<pre class="file" id="file6" style="display: none">package controllers
 
 import (
         "errors"
@@ -642,7 +691,7 @@ type EventController struct {
         eventService services.EventServiceInterface
 }
 
-func NewEventController(s services.EventServiceInterface) *EventController <span class="cov8" title="1">{
+func NewEventController(s services.EventServiceInterface) *EventController <span class="cov10" title="36">{
         return &amp;EventController{eventService: s}
 }</span>
 
@@ -700,7 +749,7 @@ type eventResponse struct {
         UpdatedAt        string  `json:"updated_at"`
 }
 
-func toEventResponse(e *domain.Event) eventResponse <span class="cov8" title="1">{
+func toEventResponse(e *domain.Event) eventResponse <span class="cov5" title="5">{
         return eventResponse{
                 ID:               e.ID,
                 Title:            e.Title,
@@ -723,103 +772,103 @@ func toEventResponse(e *domain.Event) eventResponse <span class="cov8" title="1"
         }
 }</span>
 
-func (h *EventController) GetAll(c *gin.Context) <span class="cov8" title="1">{
+func (h *EventController) GetAll(c *gin.Context) <span class="cov7" title="11">{
         filters := domain.EventFilters{
                 Category: c.Query("category"),
         }
-        if dateStr := c.Query("date"); dateStr != "" </span><span class="cov0" title="0">{
+        if dateStr := c.Query("date"); dateStr != "" </span><span class="cov2" title="2">{
                 parsed, err := time.Parse("2006-01-02", dateStr)
-                if err == nil </span><span class="cov0" title="0">{
+                if err == nil </span><span class="cov1" title="1">{
                         filters.DateFrom = &amp;parsed
                         end := parsed.Add(24 * time.Hour)
                         filters.DateTo = &amp;end
                 }</span>
         }
-        <span class="cov8" title="1">if dateFromStr := c.Query("date_from"); dateFromStr != "" </span><span class="cov0" title="0">{
+        <span class="cov7" title="11">if dateFromStr := c.Query("date_from"); dateFromStr != "" </span><span class="cov2" title="2">{
                 parsed, err := time.Parse("2006-01-02", dateFromStr)
-                if err == nil </span><span class="cov0" title="0">{
+                if err == nil </span><span class="cov1" title="1">{
                         filters.DateFrom = &amp;parsed
                 }</span>
         }
-        <span class="cov8" title="1">if dateToStr := c.Query("date_to"); dateToStr != "" </span><span class="cov0" title="0">{
+        <span class="cov7" title="11">if dateToStr := c.Query("date_to"); dateToStr != "" </span><span class="cov2" title="2">{
                 parsed, err := time.Parse("2006-01-02", dateToStr)
-                if err == nil </span><span class="cov0" title="0">{
+                if err == nil </span><span class="cov1" title="1">{
                         filters.DateTo = &amp;parsed
                 }</span>
         }
-        <span class="cov8" title="1">if minPriceStr := c.Query("min_price"); minPriceStr != "" </span><span class="cov0" title="0">{
-                if minPrice, err := strconv.ParseFloat(minPriceStr, 64); err == nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="11">if minPriceStr := c.Query("min_price"); minPriceStr != "" </span><span class="cov2" title="2">{
+                if minPrice, err := strconv.ParseFloat(minPriceStr, 64); err == nil </span><span class="cov1" title="1">{
                         filters.MinPrice = &amp;minPrice
                 }</span>
         }
-        <span class="cov8" title="1">if maxPriceStr := c.Query("max_price"); maxPriceStr != "" </span><span class="cov0" title="0">{
-                if maxPrice, err := strconv.ParseFloat(maxPriceStr, 64); err == nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="11">if maxPriceStr := c.Query("max_price"); maxPriceStr != "" </span><span class="cov2" title="2">{
+                if maxPrice, err := strconv.ParseFloat(maxPriceStr, 64); err == nil </span><span class="cov1" title="1">{
                         filters.MaxPrice = &amp;maxPrice
                 }</span>
         }
 
-        <span class="cov8" title="1">events, err := h.eventService.GetAll(filters)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="11">events, err := h.eventService.GetAll(filters)
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">resp := make([]eventResponse, 0, len(events))
-        for _, e := range events </span><span class="cov8" title="1">{
+        <span class="cov6" title="10">resp := make([]eventResponse, 0, len(events))
+        for _, e := range events </span><span class="cov2" title="2">{
                 resp = append(resp, toEventResponse(&amp;e))
         }</span>
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, resp)</span>
+        <span class="cov6" title="10">c.JSON(http.StatusOK, resp)</span>
 }
 
-func (h *EventController) GetByID(c *gin.Context) <span class="cov8" title="1">{
+func (h *EventController) GetByID(c *gin.Context) <span class="cov4" title="4">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">event, err := h.eventService.GetByID(uint(id))
-        if err != nil </span><span class="cov8" title="1">{
-                if isNotFound(err) </span><span class="cov8" title="1">{
+        <span class="cov3" title="3">event, err := h.eventService.GetByID(uint(id))
+        if err != nil </span><span class="cov2" title="2">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, toEventResponse(event))</span>
+        <span class="cov1" title="1">c.JSON(http.StatusOK, toEventResponse(event))</span>
 }
 
-func (h *EventController) Create(c *gin.Context) <span class="cov8" title="1">{
+func (h *EventController) Create(c *gin.Context) <span class="cov5" title="5">{
         var req createEventRequest
-        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">eventDate, err := time.Parse(time.RFC3339, req.EventDate)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov4" title="4">eventDate, err := time.Parse(time.RFC3339, req.EventDate)
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event_date, use RFC3339"})
                 return
         }</span>
 
-        <span class="cov8" title="1">var presaleStart, generalSale *time.Time
+        <span class="cov3" title="3">var presaleStart, generalSale *time.Time
         if req.PresaleStartDate != "" </span><span class="cov0" title="0">{
                 t, perr := time.Parse(time.RFC3339, req.PresaleStartDate)
                 if perr == nil </span><span class="cov0" title="0">{
                         presaleStart = &amp;t
                 }</span>
         }
-        <span class="cov8" title="1">if req.GeneralSaleDate != "" </span><span class="cov0" title="0">{
+        <span class="cov3" title="3">if req.GeneralSaleDate != "" </span><span class="cov0" title="0">{
                 t, perr := time.Parse(time.RFC3339, req.GeneralSaleDate)
                 if perr == nil </span><span class="cov0" title="0">{
                         generalSale = &amp;t
                 }</span>
         }
 
-        <span class="cov8" title="1">created, err := h.eventService.Create(services.CreateEventInput{
+        <span class="cov3" title="3">created, err := h.eventService.Create(services.CreateEventInput{
                 Title:            req.Title,
                 Date:             eventDate,
                 Duration:         req.DurationMinutes,
@@ -835,32 +884,32 @@ func (h *EventController) Create(c *gin.Context) <span class="cov8" title="1">{
                 GeneralSaleDate:  generalSale,
                 CreatedByID:      c.GetUint("userID"),
         })
-        if err != nil </span><span class="cov0" title="0">{
-                if errors.Is(err, services.ErrInvalidInput) </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov2" title="2">{
+                if errors.Is(err, services.ErrInvalidInput) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusCreated, toEventResponse(created))</span>
+        <span class="cov1" title="1">c.JSON(http.StatusCreated, toEventResponse(created))</span>
 }
 
-func (h *EventController) Update(c *gin.Context) <span class="cov8" title="1">{
+func (h *EventController) Update(c *gin.Context) <span class="cov5" title="6">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">var req updateEventRequest
-        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+        <span class="cov5" title="5">var req updateEventRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">input := services.UpdateEventInput{
+        <span class="cov4" title="4">input := services.UpdateEventInput{
                 Title:            optionalString(req.Title),
                 Description:      req.Description,
                 ImageURL:         req.ImageURL,
@@ -881,35 +930,35 @@ func (h *EventController) Update(c *gin.Context) <span class="cov8" title="1">{
                         input.Date = &amp;t
                 }</span>
         }
-        <span class="cov8" title="1">input.PresaleStartDate = req.PresaleStartDate
+        <span class="cov4" title="4">input.PresaleStartDate = req.PresaleStartDate
         input.GeneralSaleDate = req.GeneralSaleDate
 
         event, err := h.eventService.Update(uint(id), input)
-        if err != nil </span><span class="cov8" title="1">{
-                if isNotFound(err) </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov3" title="3">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">if errors.Is(err, services.ErrEventCancelled) </span><span class="cov0" title="0">{
+                <span class="cov2" title="2">if errors.Is(err, services.ErrEventCancelled) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, toEventResponse(event))</span>
+        <span class="cov1" title="1">c.JSON(http.StatusOK, toEventResponse(event))</span>
 }
 
-func (h *EventController) Delete(c *gin.Context) <span class="cov8" title="1">{
+func (h *EventController) Delete(c *gin.Context) <span class="cov3" title="3">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">if err := h.eventService.Cancel(uint(id)); err != nil </span><span class="cov8" title="1">{
-                if isNotFound(err) </span><span class="cov8" title="1">{
+        <span class="cov2" title="2">if err := h.eventService.Cancel(uint(id)); err != nil </span><span class="cov1" title="1">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
                         return
                 }</span>
@@ -917,7 +966,7 @@ func (h *EventController) Delete(c *gin.Context) <span class="cov8" title="1">{
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusNoContent, nil)</span>
+        <span class="cov1" title="1">c.JSON(http.StatusNoContent, nil)</span>
 }
 
 type saleStatusResponse struct {
@@ -927,60 +976,60 @@ type saleStatusResponse struct {
         Message          string           `json:"message"`
 }
 
-func salePhaseMessage(phase domain.SalePhase, presaleStart, generalSale *time.Time) string <span class="cov8" title="1">{
+func salePhaseMessage(phase domain.SalePhase, presaleStart, generalSale *time.Time) string <span class="cov6" title="10">{
         switch phase </span>{
-        case domain.PhaseNotYetOpen:<span class="cov0" title="0">
-                if presaleStart != nil </span><span class="cov0" title="0">{
+        case domain.PhaseNotYetOpen:<span class="cov2" title="2">
+                if presaleStart != nil </span><span class="cov1" title="1">{
                         return fmt.Sprintf("Las ventas aún no abrieron. La preventa comienza el %s.", presaleStart.Format("02/01/2006 15:04"))
                 }</span>
-                <span class="cov0" title="0">return "Las ventas aún no han comenzado."</span>
-        case domain.PhasePresale:<span class="cov8" title="1">
-                if generalSale != nil </span><span class="cov8" title="1">{
+                <span class="cov1" title="1">return "Las ventas aún no han comenzado."</span>
+        case domain.PhasePresale:<span class="cov3" title="3">
+                if generalSale != nil </span><span class="cov2" title="2">{
                         return fmt.Sprintf("Pre-venta activa. La venta general empieza en %s. Se require un código de acceso para comprar.", generalSale.Format("02/01/2006 15:04"))
                 }</span>
-                <span class="cov0" title="0">return "Preventa activa. Se requiere un código de acceso para comprar."</span>
-        case domain.PhasePublic:<span class="cov0" title="0">
-                if generalSale != nil </span><span class="cov0" title="0">{
+                <span class="cov1" title="1">return "Preventa activa. Se requiere un código de acceso para comprar."</span>
+        case domain.PhasePublic:<span class="cov2" title="2">
+                if generalSale != nil </span><span class="cov1" title="1">{
                         return fmt.Sprintf("Venta general disponible desde el %s. No se requiere código de acceso.", generalSale.Format("02/01/2006 15:04"))
                 }</span>
-                <span class="cov0" title="0">return "Venta general abierta. No se requiere código de acceso."</span>
-        case domain.PhaseNoPresale:<span class="cov0" title="0">
+                <span class="cov1" title="1">return "Venta general abierta. No se requiere código de acceso."</span>
+        case domain.PhaseNoPresale:<span class="cov2" title="2">
                 return ""</span>
-        default:<span class="cov0" title="0">
+        default:<span class="cov1" title="1">
                 return ""</span>
         }
 }
 
-func (h *EventController) GetSaleStatus(c *gin.Context) <span class="cov8" title="1">{
+func (h *EventController) GetSaleStatus(c *gin.Context) <span class="cov5" title="7">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid event id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">event, err := h.eventService.GetByID(uint(id))
-        if err != nil </span><span class="cov0" title="0">{
-                if isNotFound(err) </span><span class="cov0" title="0">{
+        <span class="cov5" title="6">event, err := h.eventService.GetByID(uint(id))
+        if err != nil </span><span class="cov2" title="2">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "event not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">var phase domain.SalePhase
+        <span class="cov4" title="4">var phase domain.SalePhase
         var msg string
-        if event.Status == "cancelled" </span><span class="cov0" title="0">{
+        if event.Status == "cancelled" </span><span class="cov1" title="1">{
                 phase = domain.PhaseNotYetOpen
                 msg = "Evento cancelado"
-        }</span> else<span class="cov8" title="1"> if event.Capacity &gt; 0 &amp;&amp; event.TicketsSold &gt;= event.Capacity </span><span class="cov0" title="0">{
+        }</span> else<span class="cov3" title="3"> if event.Capacity &gt; 0 &amp;&amp; event.TicketsSold &gt;= event.Capacity </span><span class="cov1" title="1">{
                 phase = domain.PhaseNotYetOpen
                 msg = "Entradas agotadas"
-        }</span> else<span class="cov8" title="1"> {
+        }</span> else<span class="cov2" title="2"> {
                 phase = event.CurrentSalePhase(time.Now())
                 msg = salePhaseMessage(phase, event.PresaleStartDate, event.GeneralSaleDate)
         }</span>
-        <span class="cov8" title="1">resp := saleStatusResponse{
+        <span class="cov4" title="4">resp := saleStatusResponse{
                 Phase:            phase,
                 PresaleStartDate: timePtrToString(event.PresaleStartDate),
                 GeneralSaleDate:  timePtrToString(event.GeneralSaleDate),
@@ -991,7 +1040,7 @@ func (h *EventController) GetSaleStatus(c *gin.Context) <span class="cov8" title
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package controllers
+		<pre class="file" id="file7" style="display: none">package controllers
 
 import (
         "errors"
@@ -1005,28 +1054,28 @@ type notFoundError interface {
         NotFound() bool
 }
 
-func isNotFound(err error) bool <span class="cov8" title="1">{
+func isNotFound(err error) bool <span class="cov10" title="20">{
         var nf notFoundError
         return errors.As(err, &amp;nf)
 }</span>
 
-func optionalString(s string) *string <span class="cov8" title="1">{
-        if s == "" </span><span class="cov0" title="0">{
+func optionalString(s string) *string <span class="cov6" title="6">{
+        if s == "" </span><span class="cov1" title="1">{
                 return nil
         }</span>
-        <span class="cov8" title="1">return &amp;s</span>
+        <span class="cov5" title="5">return &amp;s</span>
 }
 
-func timePtrToString(t *time.Time) *string <span class="cov8" title="1">{
-        if t == nil </span><span class="cov8" title="1">{
+func timePtrToString(t *time.Time) *string <span class="cov10" title="20">{
+        if t == nil </span><span class="cov9" title="17">{
                 return nil
         }</span>
-        <span class="cov8" title="1">s := t.Format(time.RFC3339)
+        <span class="cov4" title="3">s := t.Format(time.RFC3339)
         return &amp;s</span>
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package controllers
+		<pre class="file" id="file8" style="display: none">package controllers
 
 import (
         "errors"
@@ -1044,7 +1093,7 @@ type TicketController struct {
         ticketService services.TicketServiceInterface
 }
 
-func NewTicketController(s services.TicketServiceInterface) *TicketController <span class="cov8" title="1">{
+func NewTicketController(s services.TicketServiceInterface) *TicketController <span class="cov10" title="18">{
         return &amp;TicketController{ticketService: s}
 }</span>
 
@@ -1069,15 +1118,15 @@ type ticketResponse struct {
         EventDate     string  `json:"event_date"`
 }
 
-func toTicketResponse(t *domain.Ticket) ticketResponse <span class="cov8" title="1">{
+func toTicketResponse(t *domain.Ticket) ticketResponse <span class="cov6" title="5">{
         eventTitle := ""
         eventDate := ""
-        if t.Event.Title != "" </span><span class="cov0" title="0">{
+        if t.Event.Title != "" </span><span class="cov1" title="1">{
                 eventTitle = t.Event.Title
                 eventDate = t.Event.EventDate.Format(time.RFC3339)
         }</span>
 
-        <span class="cov8" title="1">return ticketResponse{
+        <span class="cov6" title="5">return ticketResponse{
                 ID:            t.ID,
                 UserID:        t.UserID,
                 EventID:       t.EventID,
@@ -1089,99 +1138,99 @@ func toTicketResponse(t *domain.Ticket) ticketResponse <span class="cov8" title=
         }</span>
 }
 
-func (h *TicketController) Purchase(c *gin.Context) <span class="cov8" title="1">{
+func (h *TicketController) Purchase(c *gin.Context) <span class="cov6" title="6">{
         var req purchaseTicketRequest
-        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">userID := c.GetUint("userID")
+        <span class="cov6" title="5">userID := c.GetUint("userID")
 
         tickets, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID, Quantity: req.Quantity, PresaleCode: req.PresaleCode})
-        if err != nil </span><span class="cov8" title="1">{
-                if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov5" title="4">{
+                if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) </span><span class="cov4" title="3">{
                         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">resp := make([]ticketResponse, len(tickets))
-        for i, t := range tickets </span><span class="cov8" title="1">{
+        <span class="cov1" title="1">resp := make([]ticketResponse, len(tickets))
+        for i, t := range tickets </span><span class="cov3" title="2">{
                 resp[i] = toTicketResponse(t)
         }</span>
-        <span class="cov8" title="1">c.JSON(http.StatusCreated, resp)</span>
+        <span class="cov1" title="1">c.JSON(http.StatusCreated, resp)</span>
 }
 
-func (h *TicketController) GetMyTickets(c *gin.Context) <span class="cov8" title="1">{
+func (h *TicketController) GetMyTickets(c *gin.Context) <span class="cov4" title="3">{
         userID := c.GetUint("userID")
 
         tickets, err := h.ticketService.GetByUser(userID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">resp := make([]ticketResponse, 0, len(tickets))
-        for _, t := range tickets </span><span class="cov8" title="1">{
+        <span class="cov3" title="2">resp := make([]ticketResponse, 0, len(tickets))
+        for _, t := range tickets </span><span class="cov1" title="1">{
                 resp = append(resp, toTicketResponse(&amp;t))
         }</span>
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, resp)</span>
+        <span class="cov3" title="2">c.JSON(http.StatusOK, resp)</span>
 }
 
-func (h *TicketController) Cancel(c *gin.Context) <span class="cov8" title="1">{
+func (h *TicketController) Cancel(c *gin.Context) <span class="cov5" title="4">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">userID := c.GetUint("userID")
+        <span class="cov4" title="3">userID := c.GetUint("userID")
 
-        if err := h.ticketService.Cancel(uint(id), userID); err != nil </span><span class="cov8" title="1">{
-                if isNotFound(err) </span><span class="cov8" title="1">{
+        if err := h.ticketService.Cancel(uint(id), userID); err != nil </span><span class="cov3" title="2">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "ticket not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusNoContent, nil)</span>
+        <span class="cov1" title="1">c.JSON(http.StatusNoContent, nil)</span>
 }
 
-func (h *TicketController) Transfer(c *gin.Context) <span class="cov8" title="1">{
+func (h *TicketController) Transfer(c *gin.Context) <span class="cov6" title="5">{
         id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": "invalid ticket id"})
                 return
         }</span>
 
-        <span class="cov8" title="1">var req transferTicketRequest
-        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov8" title="1">{
+        <span class="cov5" title="4">var req transferTicketRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov1" title="1">{
                 c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
                 return
         }</span>
 
-        <span class="cov8" title="1">userID := c.GetUint("userID")
+        <span class="cov4" title="3">userID := c.GetUint("userID")
 
-        if err := h.ticketService.Transfer(uint(id), userID, services.TransferInput{ToUserEmail: req.ToUserEmail}); err != nil </span><span class="cov0" title="0">{
-                if isNotFound(err) </span><span class="cov0" title="0">{
+        if err := h.ticketService.Transfer(uint(id), userID, services.TransferInput{ToUserEmail: req.ToUserEmail}); err != nil </span><span class="cov3" title="2">{
+                if isNotFound(err) </span><span class="cov1" title="1">{
                         c.JSON(http.StatusNotFound, gin.H{"error": "ticket not found"})
                         return
                 }</span>
-                <span class="cov0" title="0">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+                <span class="cov1" title="1">c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
                 return</span>
         }
 
-        <span class="cov8" title="1">c.JSON(http.StatusOK, gin.H{"message": "ticket transferred successfully"})</span>
+        <span class="cov1" title="1">c.JSON(http.StatusOK, gin.H{"message": "ticket transferred successfully"})</span>
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package db
+		<pre class="file" id="file9" style="display: none">package db
 
 import (
         "crypto/tls"
@@ -1334,15 +1383,15 @@ func ensureDatabase(host, port, user, pass, name string, useTLS bool) error <spa
         return nil</span>
 }
 
-func getEnvOrDefault(key, fallback string) string <span class="cov0" title="0">{
-        if val := os.Getenv(key); val != "" </span><span class="cov0" title="0">{
+func getEnvOrDefault(key, fallback string) string <span class="cov10" title="4">{
+        if val := os.Getenv(key); val != "" </span><span class="cov1" title="1">{
                 return val
         }</span>
-        <span class="cov0" title="0">return fallback</span>
+        <span class="cov8" title="3">return fallback</span>
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package db
+		<pre class="file" id="file10" style="display: none">package db
 
 import (
         "time"
@@ -1356,67 +1405,67 @@ type EventDAOImpl struct {
         db *gorm.DB
 }
 
-func NewEventDAO(db *gorm.DB) *EventDAOImpl <span class="cov0" title="0">{
+func NewEventDAO(db *gorm.DB) *EventDAOImpl <span class="cov8" title="8">{
         return &amp;EventDAOImpl{db: db}
 }</span>
 
-func (d *EventDAOImpl) FindAll(filters domain.EventFilters) ([]domain.Event, error) <span class="cov0" title="0">{
+func (d *EventDAOImpl) FindAll(filters domain.EventFilters) ([]domain.Event, error) <span class="cov7" title="5">{
         query := d.db.Model(&amp;domain.Event{}).Preload("CreatedBy")
 
         // Hide events that have already ended
         query = query.Where("event_date &gt;= ?", time.Now())
 
-        if filters.Category != "" </span><span class="cov0" title="0">{
+        if filters.Category != "" </span><span class="cov1" title="1">{
                 query = query.Where("category = ?", filters.Category)
         }</span>
-        <span class="cov0" title="0">if filters.DateFrom != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="5">if filters.DateFrom != nil </span><span class="cov1" title="1">{
                 query = query.Where("event_date &gt;= ?", *filters.DateFrom)
         }</span>
-        <span class="cov0" title="0">if filters.DateTo != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="5">if filters.DateTo != nil </span><span class="cov1" title="1">{
                 query = query.Where("event_date &lt;= ?", *filters.DateTo)
         }</span>
-        <span class="cov0" title="0">if filters.MinPrice != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="5">if filters.MinPrice != nil </span><span class="cov1" title="1">{
                 query = query.Where("price &gt;= ?", *filters.MinPrice)
         }</span>
-        <span class="cov0" title="0">if filters.MaxPrice != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="5">if filters.MaxPrice != nil </span><span class="cov1" title="1">{
                 query = query.Where("price &lt;= ?", *filters.MaxPrice)
         }</span>
 
-        <span class="cov0" title="0">var events []domain.Event
+        <span class="cov7" title="5">var events []domain.Event
         err := query.Order("event_date ASC").Find(&amp;events).Error
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return events, nil</span>
+        <span class="cov7" title="5">return events, nil</span>
 }
 
-func (d *EventDAOImpl) FindByID(id uint) (*domain.Event, error) <span class="cov0" title="0">{
+func (d *EventDAOImpl) FindByID(id uint) (*domain.Event, error) <span class="cov8" title="7">{
         var event domain.Event
         err := d.db.Preload("CreatedBy").Take(&amp;event, id).Error
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov3" title="2">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return &amp;event, nil</span>
+        <span class="cov7" title="5">return &amp;event, nil</span>
 }
 
-func (d *EventDAOImpl) Create(event *domain.Event) error <span class="cov0" title="0">{
+func (d *EventDAOImpl) Create(event *domain.Event) error <span class="cov10" title="11">{
         return d.db.Create(event).Error
 }</span>
 
-func (d *EventDAOImpl) Update(event *domain.Event) error <span class="cov0" title="0">{
+func (d *EventDAOImpl) Update(event *domain.Event) error <span class="cov1" title="1">{
         return d.db.Save(event).Error
 }</span>
 
-func (d *EventDAOImpl) Delete(id uint) error <span class="cov0" title="0">{
+func (d *EventDAOImpl) Delete(id uint) error <span class="cov1" title="1">{
         return d.db.Delete(&amp;domain.Event{}, id).Error
 }</span>
 
-func (d *EventDAOImpl) IncrementTicketsSold(eventID uint, delta int) error <span class="cov0" title="0">{
+func (d *EventDAOImpl) IncrementTicketsSold(eventID uint, delta int) error <span class="cov3" title="2">{
         return d.db.Model(&amp;domain.Event{}).Where("id = ?", eventID).
                 UpdateColumn("tickets_sold", gorm.Expr("tickets_sold + ?", delta)).Error
 }</span>
 
-func (d *EventDAOImpl) DecrementTicketsSold(eventID uint) error <span class="cov0" title="0">{
+func (d *EventDAOImpl) DecrementTicketsSold(eventID uint) error <span class="cov3" title="2">{
         return d.db.Model(&amp;domain.Event{}).Where("id = ? AND tickets_sold &gt; 0", eventID).
                 UpdateColumn("tickets_sold", gorm.Expr("tickets_sold - 1")).Error
 }</span>
@@ -1424,7 +1473,7 @@ func (d *EventDAOImpl) DecrementTicketsSold(eventID uint) error <span class="cov
 var _ EventDAO = (*EventDAOImpl)(nil)
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package db
+		<pre class="file" id="file11" style="display: none">package db
 
 import (
         "backend/domain"
@@ -1436,45 +1485,45 @@ type TicketDAOImpl struct {
         db *gorm.DB
 }
 
-func NewTicketDAO(db *gorm.DB) *TicketDAOImpl <span class="cov0" title="0">{
+func NewTicketDAO(db *gorm.DB) *TicketDAOImpl <span class="cov9" title="8">{
         return &amp;TicketDAOImpl{db: db}
 }</span>
 
-func (d *TicketDAOImpl) Create(ticket *domain.Ticket) error <span class="cov0" title="0">{
+func (d *TicketDAOImpl) Create(ticket *domain.Ticket) error <span class="cov10" title="10">{
         return d.db.Create(ticket).Error
 }</span>
 
-func (d *TicketDAOImpl) FindByID(id uint) (*domain.Ticket, error) <span class="cov0" title="0">{
+func (d *TicketDAOImpl) FindByID(id uint) (*domain.Ticket, error) <span class="cov6" title="4">{
         var ticket domain.Ticket
         err := d.db.Preload("User").Preload("Event").
                 Take(&amp;ticket, id).Error
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return &amp;ticket, nil</span>
+        <span class="cov5" title="3">return &amp;ticket, nil</span>
 }
 
-func (d *TicketDAOImpl) FindByUserID(userID uint) ([]domain.Ticket, error) <span class="cov0" title="0">{
+func (d *TicketDAOImpl) FindByUserID(userID uint) ([]domain.Ticket, error) <span class="cov5" title="3">{
         var tickets []domain.Ticket
         err := d.db.Where("user_id = ?", userID).
                 Preload("Event").Order("purchased_at DESC").Find(&amp;tickets).Error
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return tickets, nil</span>
+        <span class="cov5" title="3">return tickets, nil</span>
 }
 
-func (d *TicketDAOImpl) FindActiveByEvent(eventID uint) ([]domain.Ticket, error) <span class="cov0" title="0">{
+func (d *TicketDAOImpl) FindActiveByEvent(eventID uint) ([]domain.Ticket, error) <span class="cov1" title="1">{
         var tickets []domain.Ticket
         err := d.db.Where("event_id = ? AND status = 'active'", eventID).
                 Preload("User").Find(&amp;tickets).Error
         if err != nil </span><span class="cov0" title="0">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return tickets, nil</span>
+        <span class="cov1" title="1">return tickets, nil</span>
 }
 
-func (d *TicketDAOImpl) CountActiveByEvent(eventID uint) (int, error) <span class="cov0" title="0">{
+func (d *TicketDAOImpl) CountActiveByEvent(eventID uint) (int, error) <span class="cov3" title="2">{
         var count int64
         err := d.db.Model(&amp;domain.Ticket{}).
                 Where("event_id = ? AND status = 'active'", eventID).
@@ -1482,21 +1531,21 @@ func (d *TicketDAOImpl) CountActiveByEvent(eventID uint) (int, error) <span clas
         if err != nil </span><span class="cov0" title="0">{
                 return 0, err
         }</span>
-        <span class="cov0" title="0">return int(count), nil</span>
+        <span class="cov3" title="2">return int(count), nil</span>
 }
 
-func (d *TicketDAOImpl) CancelByEvent(eventID uint) error <span class="cov0" title="0">{
+func (d *TicketDAOImpl) CancelByEvent(eventID uint) error <span class="cov1" title="1">{
         return d.db.Model(&amp;domain.Ticket{}).
                 Where("event_id = ? AND status = 'active'", eventID).
                 Update("status", "cancelled").Error
 }</span>
 
-func (d *TicketDAOImpl) Save(ticket *domain.Ticket) error <span class="cov0" title="0">{
+func (d *TicketDAOImpl) Save(ticket *domain.Ticket) error <span class="cov1" title="1">{
         return d.db.Save(ticket).Error
 }</span>
 
-func (d *TicketDAOImpl) WithTransaction(fn func(TxContext) error) error <span class="cov0" title="0">{
-        return d.db.Transaction(func(tx *gorm.DB) error </span><span class="cov0" title="0">{
+func (d *TicketDAOImpl) WithTransaction(fn func(TxContext) error) error <span class="cov3" title="2">{
+        return d.db.Transaction(func(tx *gorm.DB) error </span><span class="cov3" title="2">{
                 return fn(tx)
         }</span>)
 }
@@ -1504,7 +1553,7 @@ func (d *TicketDAOImpl) WithTransaction(fn func(TxContext) error) error <span cl
 var _ TicketDAO = (*TicketDAOImpl)(nil)
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package db
+		<pre class="file" id="file12" style="display: none">package db
 
 import (
         "backend/domain"
@@ -1516,36 +1565,36 @@ type UserDAOImpl struct {
         db *gorm.DB
 }
 
-func NewUserDAO(db *gorm.DB) *UserDAOImpl <span class="cov0" title="0">{
+func NewUserDAO(db *gorm.DB) *UserDAOImpl <span class="cov7" title="3">{
         return &amp;UserDAOImpl{db: db}
 }</span>
 
-func (d *UserDAOImpl) Create(user *domain.User) error <span class="cov0" title="0">{
+func (d *UserDAOImpl) Create(user *domain.User) error <span class="cov10" title="5">{
         return d.db.Create(user).Error
 }</span>
 
-func (d *UserDAOImpl) FindByEmail(email string) (*domain.User, error) <span class="cov0" title="0">{
+func (d *UserDAOImpl) FindByEmail(email string) (*domain.User, error) <span class="cov4" title="2">{
         var user domain.User
         err := d.db.Where("email = ?", email).Take(&amp;user).Error
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return &amp;user, nil</span>
+        <span class="cov1" title="1">return &amp;user, nil</span>
 }
 
-func (d *UserDAOImpl) FindByID(id uint) (*domain.User, error) <span class="cov0" title="0">{
+func (d *UserDAOImpl) FindByID(id uint) (*domain.User, error) <span class="cov4" title="2">{
         var user domain.User
         err := d.db.Take(&amp;user, id).Error
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return &amp;user, nil</span>
+        <span class="cov1" title="1">return &amp;user, nil</span>
 }
 
 var _ UserDAO = (*UserDAOImpl)(nil)
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package domain
+		<pre class="file" id="file13" style="display: none">package domain
 
 import (
         "time"
@@ -1587,21 +1636,21 @@ type Event struct {
         CreatedBy User `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"created_by"`
 }
 
-func (e *Event) CurrentSalePhase(now time.Time) SalePhase <span class="cov8" title="1">{
-        if !e.PresaleActive || e.PresaleStartDate == nil || e.GeneralSaleDate == nil </span><span class="cov8" title="1">{
+func (e *Event) CurrentSalePhase(now time.Time) SalePhase <span class="cov10" title="9">{
+        if !e.PresaleActive || e.PresaleStartDate == nil || e.GeneralSaleDate == nil </span><span class="cov6" title="4">{
                 return PhaseNoPresale
         }</span>
-        <span class="cov8" title="1">if now.Before(*e.PresaleStartDate) </span><span class="cov8" title="1">{
+        <span class="cov7" title="5">if now.Before(*e.PresaleStartDate) </span><span class="cov1" title="1">{
                 return PhaseNotYetOpen
         }</span>
-        <span class="cov8" title="1">if now.Before(*e.GeneralSaleDate) </span><span class="cov8" title="1">{
+        <span class="cov6" title="4">if now.Before(*e.GeneralSaleDate) </span><span class="cov3" title="2">{
                 return PhasePresale
         }</span>
-        <span class="cov8" title="1">return PhasePublic</span>
+        <span class="cov3" title="2">return PhasePublic</span>
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package logger
+		<pre class="file" id="file14" style="display: none">package logger
 
 import (
         "encoding/json"
@@ -1628,32 +1677,32 @@ type Entry struct {
         Message   string `json:"message"`
 }
 
-func log(level Level, msg string, args ...interface{}) {
+func log(level Level, msg string, args ...interface{}) <span class="cov10" title="11">{
         entry := Entry{
                 Timestamp: time.Now().UTC().Format(time.RFC3339),
                 Level:     level,
                 Message:   fmt.Sprintf(msg, args...),
         }
         data, _ := json.Marshal(entry)
-</span>        out := os.Stdout
-        i</span>f level == LevelError || level == LevelFatal {
-        <span class="cov0" title="0">        out = os.Stderr
-</span>        }
-        fmt.Fprintln(out, string(data))
+        out := os.Stdout
+        if level == LevelError || level == LevelFatal </span><span class="cov5" title="3">{
+                out = os.Stderr
+        }</span>
+        <span class="cov10" title="11">fmt.Fprintln(out, string(data))</span>
 }
-</span>
-</span>func Info(msg string, args ...interface{})  <span class="cov0" title="0">{ log(LevelInfo, msg, args...) }</span>
-func Warn(msg string, args ...interface{})  <span class="cov0" title="0">{ log(LevelWarn, msg, args...) }</span>
-func Error(msg string, args ...interface{}) { log(LevelError, msg, args...) }
-func Debug(msg string, args ...interface{}) <span class="cov0" title="0">{ log(LevelDebug, msg, args...) }
 
-func Fatal(msg string, args ...interface{}) {
-        </span>log(LevelFatal, msg, args...)
+func Info(msg string, args ...interface{})  <span class="cov6" title="4">{ log(LevelInfo, msg, args...) }</span>
+func Warn(msg string, args ...interface{})  <span class="cov3" title="2">{ log(LevelWarn, msg, args...) }</span>
+func Error(msg string, args ...interface{}) <span class="cov3" title="2">{ log(LevelError, msg, args...) }</span>
+func Debug(msg string, args ...interface{}) <span class="cov3" title="2">{ log(LevelDebug, msg, args...) }</span>
+
+func Fatal(msg string, args ...interface{}) <span class="cov1" title="1">{
+        log(LevelFatal, msg, args...)
         osExit(1)
-}
+}</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package main
+		<pre class="file" id="file15" style="display: none">package main
 
 import (
         "net/http"
@@ -1767,61 +1816,61 @@ func main() <span class="cov0" title="0">{
         }</span>
 }
 
-func corsMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
+func corsMiddleware() gin.HandlerFunc <span class="cov6" title="5">{
         raw := os.Getenv("CORS_ALLOWED_ORIGINS")
         allowed := parseOrigins(raw)
-        return func(c *gin.Context) </span><span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov6" title="5">{
                 origin := c.Request.Header.Get("Origin")
 
                 // If a specific origin is allowed and matches, echo it back.
-                if origin != "" &amp;&amp; isOriginAllowed(origin, allowed) </span><span class="cov0" title="0">{
+                if origin != "" &amp;&amp; isOriginAllowed(origin, allowed) </span><span class="cov3" title="2">{
                         c.Header("Access-Control-Allow-Origin", origin)
-                }</span> else<span class="cov0" title="0"> if len(allowed) == 1 &amp;&amp; allowed[0] == "*" </span><span class="cov0" title="0">{
+                }</span> else<span class="cov4" title="3"> if len(allowed) == 1 &amp;&amp; allowed[0] == "*" </span><span class="cov3" title="2">{
                         c.Header("Access-Control-Allow-Origin", "*")
                 }</span>
 
-                <span class="cov0" title="0">c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+                <span class="cov6" title="5">c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
                 c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
                 c.Header("Access-Control-Allow-Credentials", "true")
 
-                if c.Request.Method == http.MethodOptions </span><span class="cov0" title="0">{
+                if c.Request.Method == http.MethodOptions </span><span class="cov1" title="1">{
                         c.AbortWithStatus(http.StatusNoContent)
                         return
                 }</span>
 
-                <span class="cov0" title="0">c.Next()</span>
+                <span class="cov5" title="4">c.Next()</span>
         }
 }
 
-func parseOrigins(raw string) []string <span class="cov0" title="0">{
-        if raw == "" </span><span class="cov0" title="0">{
+func parseOrigins(raw string) []string <span class="cov9" title="12">{
+        if raw == "" </span><span class="cov5" title="4">{
                 return []string{"*"}
         }</span>
-        <span class="cov0" title="0">parts := strings.Split(raw, ",")
+        <span class="cov7" title="8">parts := strings.Split(raw, ",")
         result := make([]string, 0, len(parts))
-        for _, p := range parts </span><span class="cov0" title="0">{
+        for _, p := range parts </span><span class="cov10" title="16">{
                 trimmed := strings.TrimSpace(p)
-                if trimmed != "" </span><span class="cov0" title="0">{
+                if trimmed != "" </span><span class="cov8" title="10">{
                         result = append(result, trimmed)
                 }</span>
         }
-        <span class="cov0" title="0">if len(result) == 0 </span><span class="cov0" title="0">{
+        <span class="cov7" title="8">if len(result) == 0 </span><span class="cov1" title="1">{
                 return []string{"*"}
         }</span>
-        <span class="cov0" title="0">return result</span>
+        <span class="cov7" title="7">return result</span>
 }
 
-func isOriginAllowed(origin string, allowed []string) bool <span class="cov0" title="0">{
-        for _, a := range allowed </span><span class="cov0" title="0">{
-                if a == "*" || a == origin </span><span class="cov0" title="0">{
+func isOriginAllowed(origin string, allowed []string) bool <span class="cov8" title="9">{
+        for _, a := range allowed </span><span class="cov8" title="9">{
+                if a == "*" || a == origin </span><span class="cov6" title="5">{
                         return true
                 }</span>
         }
-        <span class="cov0" title="0">return false</span>
+        <span class="cov5" title="4">return false</span>
 }
 
-func securityHeadersMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
-        return func(c *gin.Context) </span><span class="cov0" title="0">{
+func securityHeadersMiddleware() gin.HandlerFunc <span class="cov1" title="1">{
+        return func(c *gin.Context) </span><span class="cov1" title="1">{
                 c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
                 c.Header("X-Content-Type-Options", "nosniff")
                 c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -1832,7 +1881,7 @@ func securityHeadersMiddleware() gin.HandlerFunc <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package services
+		<pre class="file" id="file16" style="display: none">package services
 
 import (
         "errors"
@@ -1879,66 +1928,66 @@ type AuthService struct {
         userDAO db.UserDAO
 }
 
-func NewAuthService(userDAO db.UserDAO) *AuthService <span class="cov8" title="1">{
+func NewAuthService(userDAO db.UserDAO) *AuthService <span class="cov10" title="10">{
         return &amp;AuthService{userDAO: userDAO}
 }</span>
 
-func (s *AuthService) Register(input RegisterInput) (*domain.User, error) <span class="cov8" title="1">{
+func (s *AuthService) Register(input RegisterInput) (*domain.User, error) <span class="cov8" title="6">{
         input.Email = strings.TrimSpace(strings.ToLower(input.Email))
         input.Name = strings.TrimSpace(input.Name)
 
-        if len(input.Password) &lt; 8 </span><span class="cov8" title="1">{
+        if len(input.Password) &lt; 8 </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("%w: password must be at least 8 characters", ErrInvalidInput)
         }</span>
 
-        <span class="cov8" title="1">existing, err := s.userDAO.FindByEmail(input.Email)
-        if err != nil &amp;&amp; !errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov0" title="0">{
+        <span class="cov7" title="5">existing, err := s.userDAO.FindByEmail(input.Email)
+        if err != nil &amp;&amp; !errors.Is(err, gorm.ErrRecordNotFound) </span><span class="cov3" title="2">{
                 return nil, fmt.Errorf("checking existing user: %w", err)
         }</span>
-        <span class="cov8" title="1">if existing != nil </span><span class="cov8" title="1">{
+        <span class="cov5" title="3">if existing != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("%w: email is already registered", ErrInvalidInput)
         }</span>
 
-        <span class="cov8" title="1">hash, err := utils.HashPassword(input.Password)
+        <span class="cov3" title="2">hash, err := utils.HashPassword(input.Password)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("failed to hash password: %w", err)
         }</span>
 
-        <span class="cov8" title="1">user := &amp;domain.User{
+        <span class="cov3" title="2">user := &amp;domain.User{
                 Name:         input.Name,
                 Email:        input.Email,
                 PasswordHash: hash,
                 Role:         "client",
         }
 
-        if err := s.userDAO.Create(user); err != nil </span><span class="cov0" title="0">{
+        if err := s.userDAO.Create(user); err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("failed to create user: %w", err)
         }</span>
 
-        <span class="cov8" title="1">return user, nil</span>
+        <span class="cov1" title="1">return user, nil</span>
 }
 
-func (s *AuthService) Login(input LoginInput) (string, *domain.User, error) <span class="cov8" title="1">{
+func (s *AuthService) Login(input LoginInput) (string, *domain.User, error) <span class="cov5" title="3">{
         input.Email = strings.TrimSpace(strings.ToLower(input.Email))
 
         user, err := s.userDAO.FindByEmail(input.Email)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 return "", nil, ErrUnauthorized
         }</span>
 
-        <span class="cov8" title="1">if !utils.CheckPassword(input.Password, user.PasswordHash) </span><span class="cov8" title="1">{
+        <span class="cov3" title="2">if !utils.CheckPassword(input.Password, user.PasswordHash) </span><span class="cov1" title="1">{
                 return "", nil, ErrUnauthorized
         }</span>
 
-        <span class="cov8" title="1">token, err := utils.GenerateJWT(user.ID, user.Role)
+        <span class="cov1" title="1">token, err := utils.GenerateJWT(user.ID, user.Role)
         if err != nil </span><span class="cov0" title="0">{
                 return "", nil, fmt.Errorf("failed to generate token: %w", err)
         }</span>
 
-        <span class="cov8" title="1">return token, user, nil</span>
+        <span class="cov1" title="1">return token, user, nil</span>
 }
 
-func (s *AuthService) GenerateToken(userID uint, role string) (string, error) <span class="cov0" title="0">{
+func (s *AuthService) GenerateToken(userID uint, role string) (string, error) <span class="cov1" title="1">{
         return utils.GenerateJWT(userID, role)
 }</span>
 
@@ -1946,7 +1995,7 @@ func (s *AuthService) GenerateToken(userID uint, role string) (string, error) <s
 var _ AuthServiceInterface = (*AuthService)(nil)
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package services
+		<pre class="file" id="file17" style="display: none">package services
 
 import "errors"
 
@@ -1954,10 +2003,10 @@ import "errors"
 // notFoundError interface checked by controllers via errors.As.
 type notFoundErr struct{}
 
-func (e *notFoundErr) Error() string <span class="cov8" title="1">{ return "resource not found" }</span>
+func (e *notFoundErr) Error() string <span class="cov10" title="13">{ return "resource not found" }</span>
 
 // NotFound is consumed by controllers/helpers.go isNotFound().
-func (e *notFoundErr) NotFound() bool <span class="cov0" title="0">{ return true }</span>
+func (e *notFoundErr) NotFound() bool <span class="cov4" title="3">{ return true }</span>
 
 var (
         ErrNotFound          = &amp;notFoundErr{}
@@ -1975,7 +2024,7 @@ var (
 )
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package services
+		<pre class="file" id="file18" style="display: none">package services
 
 import (
         "fmt"
@@ -2044,45 +2093,45 @@ type EventService struct {
         ticketDAO db.TicketDAO
 }
 
-func NewEventService(eventDAO db.EventDAO, ticketDAO db.TicketDAO) *EventService <span class="cov8" title="1">{
+func NewEventService(eventDAO db.EventDAO, ticketDAO db.TicketDAO) *EventService <span class="cov10" title="32">{
         return &amp;EventService{
                 eventDAO:  eventDAO,
                 ticketDAO: ticketDAO,
         }
 }</span>
 
-func (s *EventService) GetAll(filters domain.EventFilters) ([]domain.Event, error) <span class="cov8" title="1">{
+func (s *EventService) GetAll(filters domain.EventFilters) ([]domain.Event, error) <span class="cov1" title="1">{
         return s.eventDAO.FindAll(filters)
 }</span>
 
-func (s *EventService) GetByID(id uint) (*domain.Event, error) <span class="cov8" title="1">{
+func (s *EventService) GetByID(id uint) (*domain.Event, error) <span class="cov2" title="2">{
         event, err := s.eventDAO.FindByID(id)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("event %d: %w", id, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">return event, nil</span>
+        <span class="cov1" title="1">return event, nil</span>
 }
 
-func (s *EventService) Create(input CreateEventInput) (*domain.Event, error) <span class="cov8" title="1">{
-        if input.Title == "" </span><span class="cov8" title="1">{
+func (s *EventService) Create(input CreateEventInput) (*domain.Event, error) <span class="cov6" title="8">{
+        if input.Title == "" </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("%w: title is required", ErrInvalidInput)
         }</span>
-        <span class="cov8" title="1">if input.Capacity &lt;= 0 </span><span class="cov8" title="1">{
+        <span class="cov6" title="7">if input.Capacity &lt;= 0 </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("%w: capacity must be greater than 0", ErrInvalidInput)
         }</span>
-        <span class="cov8" title="1">if !input.Date.After(time.Now()) </span><span class="cov8" title="1">{
+        <span class="cov5" title="6">if !input.Date.After(time.Now()) </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("%w: event date must be in the future", ErrInvalidInput)
         }</span>
-        <span class="cov8" title="1">if err := validatePresaleConfig(input.PresaleActive, input.PresaleCode, input.PresaleStartDate, input.GeneralSaleDate, &amp;input.Date); err != nil </span><span class="cov0" title="0">{
+        <span class="cov5" title="5">if err := validatePresaleConfig(input.PresaleActive, input.PresaleCode, input.PresaleStartDate, input.GeneralSaleDate, &amp;input.Date); err != nil </span><span class="cov1" title="1">{
                 return nil, err
         }</span>
 
-        <span class="cov8" title="1">var presaleCode *string
-        if input.PresaleActive </span><span class="cov0" title="0">{
+        <span class="cov4" title="4">var presaleCode *string
+        if input.PresaleActive </span><span class="cov1" title="1">{
                 presaleCode = strPtr(input.PresaleCode)
         }</span>
 
-        <span class="cov8" title="1">event := &amp;domain.Event{
+        <span class="cov4" title="4">event := &amp;domain.Event{
                 Title:            input.Title,
                 Description:      strPtr(input.Description),
                 ImageURL:         strPtr(input.ImageURL),
@@ -2099,162 +2148,162 @@ func (s *EventService) Create(input CreateEventInput) (*domain.Event, error) <sp
                 CreatedByID:      input.CreatedByID,
         }
 
-        if err := s.eventDAO.Create(event); err != nil </span><span class="cov0" title="0">{
+        if err := s.eventDAO.Create(event); err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("failed to create event: %w", err)
         }</span>
 
-        <span class="cov8" title="1">return event, nil</span>
+        <span class="cov3" title="3">return event, nil</span>
 }
 
-func (s *EventService) Update(id uint, input UpdateEventInput) (*domain.Event, error) <span class="cov8" title="1">{
+func (s *EventService) Update(id uint, input UpdateEventInput) (*domain.Event, error) <span class="cov8" title="16">{
         event, err := s.eventDAO.FindByID(id)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("event %d: %w", id, ErrNotFound)
         }</span>
 
-        <span class="cov8" title="1">if event.Status == "cancelled" </span><span class="cov8" title="1">{
+        <span class="cov8" title="15">if event.Status == "cancelled" </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("%w: cannot update a cancelled event", ErrEventCancelled)
         }</span>
 
-        <span class="cov8" title="1">if input.Title != nil </span><span class="cov8" title="1">{
+        <span class="cov7" title="14">if input.Title != nil </span><span class="cov3" title="3">{
                 event.Title = *input.Title
         }</span>
-        <span class="cov8" title="1">if input.Description != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Description != nil </span><span class="cov1" title="1">{
                 event.Description = input.Description
         }</span>
-        <span class="cov8" title="1">if input.ImageURL != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.ImageURL != nil </span><span class="cov1" title="1">{
                 event.ImageURL = input.ImageURL
         }</span>
-        <span class="cov8" title="1">if input.Category != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Category != nil </span><span class="cov1" title="1">{
                 event.Category = input.Category
         }</span>
-        <span class="cov8" title="1">if input.Location != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Location != nil </span><span class="cov1" title="1">{
                 event.Location = input.Location
         }</span>
-        <span class="cov8" title="1">if input.Date != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Date != nil </span><span class="cov1" title="1">{
                 event.EventDate = *input.Date
         }</span>
-        <span class="cov8" title="1">if input.Duration != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Duration != nil </span><span class="cov1" title="1">{
                 event.DurationMinutes = *input.Duration
         }</span>
-        <span class="cov8" title="1">if input.Capacity != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Capacity != nil </span><span class="cov1" title="1">{
                 event.Capacity = *input.Capacity
         }</span>
-        <span class="cov8" title="1">if input.Price != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Price != nil </span><span class="cov1" title="1">{
                 event.Price = *input.Price
         }</span>
-        <span class="cov8" title="1">if input.Status != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.Status != nil </span><span class="cov1" title="1">{
                 event.Status = *input.Status
         }</span>
 
         // Presale handling.
-        <span class="cov8" title="1">if input.PresaleActive != nil </span><span class="cov0" title="0">{
-                if *input.PresaleActive </span><span class="cov0" title="0">{
+        <span class="cov7" title="14">if input.PresaleActive != nil </span><span class="cov6" title="7">{
+                if *input.PresaleActive </span><span class="cov5" title="6">{
                         if input.PresaleCode == nil || *input.PresaleCode == "" ||
                                 input.PresaleStartDate == nil || *input.PresaleStartDate == "" ||
-                                input.GeneralSaleDate == nil || *input.GeneralSaleDate == "" </span><span class="cov0" title="0">{
+                                input.GeneralSaleDate == nil || *input.GeneralSaleDate == "" </span><span class="cov1" title="1">{
                                 return nil, fmt.Errorf("%w: presale start date, general sale date, and access code are required when pre-sale is active", ErrInvalidInput)
                         }</span>
-                        <span class="cov0" title="0">presaleStart, err := time.Parse(time.RFC3339, *input.PresaleStartDate)
-                        if err != nil </span><span class="cov0" title="0">{
+                        <span class="cov5" title="5">presaleStart, err := time.Parse(time.RFC3339, *input.PresaleStartDate)
+                        if err != nil </span><span class="cov1" title="1">{
                                 return nil, fmt.Errorf("%w: invalid presale_start_date", ErrInvalidInput)
                         }</span>
-                        <span class="cov0" title="0">generalSale, err := time.Parse(time.RFC3339, *input.GeneralSaleDate)
-                        if err != nil </span><span class="cov0" title="0">{
+                        <span class="cov4" title="4">generalSale, err := time.Parse(time.RFC3339, *input.GeneralSaleDate)
+                        if err != nil </span><span class="cov1" title="1">{
                                 return nil, fmt.Errorf("%w: invalid general_sale_date", ErrInvalidInput)
                         }</span>
-                        <span class="cov0" title="0">if !presaleStart.Before(generalSale) </span><span class="cov0" title="0">{
+                        <span class="cov3" title="3">if !presaleStart.Before(generalSale) </span><span class="cov1" title="1">{
                                 return nil, fmt.Errorf("%w: presale start date must be before general sale date", ErrInvalidInput)
                         }</span>
-                        <span class="cov0" title="0">if !generalSale.Before(event.EventDate) </span><span class="cov0" title="0">{
+                        <span class="cov2" title="2">if !generalSale.Before(event.EventDate) </span><span class="cov1" title="1">{
                                 return nil, fmt.Errorf("%w: general sale date must be before event date", ErrInvalidInput)
                         }</span>
-                        <span class="cov0" title="0">event.PresaleActive = true
+                        <span class="cov1" title="1">event.PresaleActive = true
                         event.PresaleStartDate = &amp;presaleStart
                         event.GeneralSaleDate = &amp;generalSale
                         event.PresaleCode = input.PresaleCode</span>
-                } else<span class="cov0" title="0"> {
+                } else<span class="cov1" title="1"> {
                         event.PresaleActive = false
                         event.PresaleCode = nil
                         event.PresaleStartDate = nil
                         event.GeneralSaleDate = nil
                 }</span>
-        } else<span class="cov8" title="1"> {
+        } else<span class="cov6" title="7"> {
                 // Individual field updates when PresaleActive is not being toggled.
-                if input.PresaleCode != nil </span><span class="cov0" title="0">{
+                if input.PresaleCode != nil </span><span class="cov1" title="1">{
                         event.PresaleCode = input.PresaleCode
                 }</span>
-                <span class="cov8" title="1">if input.PresaleStartDate != nil </span><span class="cov0" title="0">{
+                <span class="cov6" title="7">if input.PresaleStartDate != nil </span><span class="cov2" title="2">{
                         t, err := time.Parse(time.RFC3339, *input.PresaleStartDate)
-                        if err == nil </span><span class="cov0" title="0">{
+                        if err == nil </span><span class="cov1" title="1">{
                                 event.PresaleStartDate = &amp;t
                         }</span>
                 }
-                <span class="cov8" title="1">if input.GeneralSaleDate != nil </span><span class="cov0" title="0">{
+                <span class="cov6" title="7">if input.GeneralSaleDate != nil </span><span class="cov2" title="2">{
                         t, err := time.Parse(time.RFC3339, *input.GeneralSaleDate)
-                        if err == nil </span><span class="cov0" title="0">{
+                        if err == nil </span><span class="cov1" title="1">{
                                 event.GeneralSaleDate = &amp;t
                         }</span>
                 }
         }
 
-        <span class="cov8" title="1">if err := s.eventDAO.Update(event); err != nil </span><span class="cov0" title="0">{
+        <span class="cov6" title="9">if err := s.eventDAO.Update(event); err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("failed to update event: %w", err)
         }</span>
 
-        <span class="cov8" title="1">return event, nil</span>
+        <span class="cov6" title="8">return event, nil</span>
 }
 
-func (s *EventService) Cancel(id uint) error <span class="cov8" title="1">{
+func (s *EventService) Cancel(id uint) error <span class="cov5" title="5">{
         event, err := s.eventDAO.FindByID(id)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("event %d: %w", id, ErrNotFound)
         }</span>
 
-        <span class="cov8" title="1">if event.Status == "cancelled" </span><span class="cov8" title="1">{
+        <span class="cov4" title="4">if event.Status == "cancelled" </span><span class="cov1" title="1">{
                 return fmt.Errorf("event %d: %w", id, ErrEventCancelled)
         }</span>
 
-        <span class="cov8" title="1">event.Status = "cancelled"
-        if err := s.eventDAO.Update(event); err != nil </span><span class="cov0" title="0">{
+        <span class="cov3" title="3">event.Status = "cancelled"
+        if err := s.eventDAO.Update(event); err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("failed to cancel event: %w", err)
         }</span>
 
         // Cancel all active tickets for this event.
-        <span class="cov8" title="1">if err := s.ticketDAO.CancelByEvent(event.ID); err != nil </span><span class="cov0" title="0">{
+        <span class="cov2" title="2">if err := s.ticketDAO.CancelByEvent(event.ID); err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("failed to cancel tickets for event %d: %w", event.ID, err)
         }</span>
 
-        <span class="cov8" title="1">return nil</span>
+        <span class="cov1" title="1">return nil</span>
 }
 
-func validatePresaleConfig(active bool, code string, startDate, generalSale *time.Time, eventDate *time.Time) error <span class="cov8" title="1">{
-        if !active </span><span class="cov8" title="1">{
+func validatePresaleConfig(active bool, code string, startDate, generalSale *time.Time, eventDate *time.Time) error <span class="cov7" title="12">{
+        if !active </span><span class="cov4" title="4">{
                 return nil
         }</span>
-        <span class="cov0" title="0">if startDate == nil || generalSale == nil || code == "" </span><span class="cov0" title="0">{
+        <span class="cov6" title="8">if startDate == nil || generalSale == nil || code == "" </span><span class="cov4" title="4">{
                 return fmt.Errorf("%w: presale start date, general sale date, and access code are required when pre-sale is active", ErrInvalidInput)
         }</span>
-        <span class="cov0" title="0">if !startDate.Before(*generalSale) </span><span class="cov0" title="0">{
+        <span class="cov4" title="4">if !startDate.Before(*generalSale) </span><span class="cov1" title="1">{
                 return fmt.Errorf("%w: presale start date must be before general sale date", ErrInvalidInput)
         }</span>
-        <span class="cov0" title="0">if !generalSale.Before(*eventDate) </span><span class="cov0" title="0">{
+        <span class="cov3" title="3">if !generalSale.Before(*eventDate) </span><span class="cov1" title="1">{
                 return fmt.Errorf("%w: general sale date must be before event date", ErrInvalidInput)
         }</span>
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov2" title="2">return nil</span>
 }
 
-func strPtr(s string) *string <span class="cov8" title="1">{
-        if s == "" </span><span class="cov8" title="1">{
+func strPtr(s string) *string <span class="cov8" title="17">{
+        if s == "" </span><span class="cov7" title="12">{
                 return nil
         }</span>
-        <span class="cov0" title="0">return &amp;s</span>
+        <span class="cov5" title="5">return &amp;s</span>
 }
 
 var _ EventServiceInterface = (*EventService)(nil)
 </pre>
 		
-		<pre class="file" id="file18" style="display: none">package services
+		<pre class="file" id="file19" style="display: none">package services
 
 import (
         "fmt"
@@ -2311,7 +2360,7 @@ func NewReportService(
         eventDAO db.EventDAO,
         ticketDAO db.TicketDAO,
         userDAO db.UserDAO,
-) *ReportService <span class="cov8" title="1">{
+) *ReportService <span class="cov10" title="9">{
         return &amp;ReportService{
                 eventDAO:  eventDAO,
                 ticketDAO: ticketDAO,
@@ -2319,23 +2368,23 @@ func NewReportService(
         }
 }</span>
 
-func (s *ReportService) GetEventReport(eventID uint) (*EventReport, error) <span class="cov8" title="1">{
+func (s *ReportService) GetEventReport(eventID uint) (*EventReport, error) <span class="cov8" title="6">{
         event, err := s.eventDAO.FindByID(eventID)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("event %d: %w", eventID, ErrNotFound)
         }</span>
 
-        <span class="cov8" title="1">ticketsSold, err := s.ticketDAO.CountActiveByEvent(eventID)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="5">ticketsSold, err := s.ticketDAO.CountActiveByEvent(eventID)
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("count tickets: %w", err)
         }</span>
 
-        <span class="cov8" title="1">occupancy := 0.0
-        if event.Capacity &gt; 0 </span><span class="cov8" title="1">{
+        <span class="cov6" title="4">occupancy := 0.0
+        if event.Capacity &gt; 0 </span><span class="cov5" title="3">{
                 occupancy = float64(ticketsSold) / float64(event.Capacity) * 100
         }</span>
 
-        <span class="cov8" title="1">report := &amp;EventReport{
+        <span class="cov6" title="4">report := &amp;EventReport{
                 EventID:       event.ID,
                 EventTitle:    event.Title,
                 TotalCapacity: event.Capacity,
@@ -2344,10 +2393,10 @@ func (s *ReportService) GetEventReport(eventID uint) (*EventReport, error) <span
         }
 
         activeTickets, err := s.ticketDAO.FindActiveByEvent(eventID)
-        if err == nil </span><span class="cov8" title="1">{
-                for _, t := range activeTickets </span><span class="cov8" title="1">{
+        if err == nil </span><span class="cov5" title="3">{
+                for _, t := range activeTickets </span><span class="cov5" title="3">{
                         user, uerr := s.userDAO.FindByID(t.UserID)
-                        if uerr == nil </span><span class="cov8" title="1">{
+                        if uerr == nil </span><span class="cov3" title="2">{
                                 report.Buyers = append(report.Buyers, BuyerInfo{
                                         UserID: user.ID,
                                         Name:   user.Name,
@@ -2357,34 +2406,34 @@ func (s *ReportService) GetEventReport(eventID uint) (*EventReport, error) <span
                 }
         }
 
-        <span class="cov8" title="1">return report, nil</span>
+        <span class="cov6" title="4">return report, nil</span>
 }
 
-func (s *ReportService) GetGlobalReport() (*GlobalReport, error) <span class="cov8" title="1">{
+func (s *ReportService) GetGlobalReport() (*GlobalReport, error) <span class="cov5" title="3">{
         // Fetch all events (empty filters = no filter).
         events, err := s.eventDAO.FindAll(domain.EventFilters{})
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("list events: %w", err)
         }</span>
 
-        <span class="cov8" title="1">report := &amp;GlobalReport{
+        <span class="cov3" title="2">report := &amp;GlobalReport{
                 TotalEvents: len(events),
         }
 
-        for _, event := range events </span><span class="cov8" title="1">{
+        for _, event := range events </span><span class="cov5" title="3">{
                 ticketsSold, err := s.ticketDAO.CountActiveByEvent(event.ID)
-                if err != nil </span><span class="cov0" title="0">{
+                if err != nil </span><span class="cov1" title="1">{
                         return nil, fmt.Errorf("count tickets for event %d: %w", event.ID, err)
                 }</span>
 
-                <span class="cov8" title="1">report.TotalTicketsSold += ticketsSold
+                <span class="cov3" title="2">report.TotalTicketsSold += ticketsSold
 
                 occupancy := 0.0
-                if event.Capacity &gt; 0 </span><span class="cov8" title="1">{
+                if event.Capacity &gt; 0 </span><span class="cov3" title="2">{
                         occupancy = float64(ticketsSold) / float64(event.Capacity) * 100
                 }</span>
 
-                <span class="cov8" title="1">report.EventReports = append(report.EventReports, EventReport{
+                <span class="cov3" title="2">report.EventReports = append(report.EventReports, EventReport{
                         EventID:       event.ID,
                         EventTitle:    event.Title,
                         TotalCapacity: event.Capacity,
@@ -2393,13 +2442,13 @@ func (s *ReportService) GetGlobalReport() (*GlobalReport, error) <span class="co
                 })</span>
         }
 
-        <span class="cov8" title="1">return report, nil</span>
+        <span class="cov1" title="1">return report, nil</span>
 }
 
 var _ ReportServiceInterface = (*ReportService)(nil)
 </pre>
 		
-		<pre class="file" id="file19" style="display: none">package services
+		<pre class="file" id="file20" style="display: none">package services
 
 import (
         "fmt"
@@ -2452,7 +2501,7 @@ func NewTicketService(
         eventDAO db.EventDAO,
         userDAO db.UserDAO,
         emailClient clients.EmailClient,
-) *TicketService <span class="cov8" title="1">{
+) *TicketService <span class="cov10" title="33">{
         return &amp;TicketService{
                 ticketDAO:   ticketDAO,
                 eventDAO:    eventDAO,
@@ -2465,42 +2514,42 @@ func NewTicketService(
 // enforces pre-sale phase rules (before capacity check to avoid
 // leaking capacity info), and creates the ticket inside a
 // database transaction.
-func (s *TicketService) Purchase(userID uint, input PurchaseInput) ([]*domain.Ticket, error) <span class="cov8" title="1">{
-        if input.Quantity == 0 </span><span class="cov8" title="1">{
+func (s *TicketService) Purchase(userID uint, input PurchaseInput) ([]*domain.Ticket, error) <span class="cov7" title="13">{
+        if input.Quantity == 0 </span><span class="cov6" title="8">{
                 input.Quantity = 1
         }</span>
 
-        <span class="cov8" title="1">event, err := s.eventDAO.FindByID(input.EventID)
-        if err != nil </span><span class="cov8" title="1">{
+        <span class="cov7" title="13">event, err := s.eventDAO.FindByID(input.EventID)
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("event %d: %w", input.EventID, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">if event.Status == "cancelled" </span><span class="cov8" title="1">{
+        <span class="cov7" title="12">if event.Status == "cancelled" </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("event %d: %w", event.ID, ErrEventCancelled)
         }</span>
 
         // Pre-sale phase validation (runs before capacity check).
-        <span class="cov8" title="1">switch event.CurrentSalePhase(time.Now()) </span>{
-        case domain.PhaseNotYetOpen:<span class="cov0" title="0">
+        <span class="cov7" title="11">switch event.CurrentSalePhase(time.Now()) </span>{
+        case domain.PhaseNotYetOpen:<span class="cov1" title="1">
                 return nil, fmt.Errorf("event %d: %w", event.ID, ErrSalesNotOpen)</span>
-        case domain.PhasePresale:<span class="cov8" title="1">
-                if input.PresaleCode == "" </span><span class="cov8" title="1">{
+        case domain.PhasePresale:<span class="cov3" title="3">
+                if input.PresaleCode == "" </span><span class="cov1" title="1">{
                         return nil, fmt.Errorf("event %d: %w", event.ID, ErrPresaleCodeRequired)
                 }</span>
-                <span class="cov8" title="1">if event.PresaleCode == nil || input.PresaleCode != *event.PresaleCode </span><span class="cov8" title="1">{
+                <span class="cov2" title="2">if event.PresaleCode == nil || input.PresaleCode != *event.PresaleCode </span><span class="cov1" title="1">{
                         return nil, fmt.Errorf("event %d: %w", event.ID, ErrInvalidPresaleCode)
                 }</span>
         }
 
-        <span class="cov8" title="1">activeCount, err := s.ticketDAO.CountActiveByEvent(event.ID)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov6" title="8">activeCount, err := s.ticketDAO.CountActiveByEvent(event.ID)
+        if err != nil </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("count tickets: %w", err)
         }</span>
-        <span class="cov8" title="1">if activeCount+int(input.Quantity) &gt; event.Capacity </span><span class="cov8" title="1">{
+        <span class="cov6" title="7">if activeCount+int(input.Quantity) &gt; event.Capacity </span><span class="cov1" title="1">{
                 return nil, fmt.Errorf("event %d: %w", event.ID, ErrNoCapacity)
         }</span>
 
-        <span class="cov8" title="1">tickets := make([]*domain.Ticket, input.Quantity)
-        for i := range tickets </span><span class="cov8" title="1">{
+        <span class="cov5" title="6">tickets := make([]*domain.Ticket, input.Quantity)
+        for i := range tickets </span><span class="cov5" title="6">{
                 tickets[i] = &amp;domain.Ticket{
                         UserID:        userID,
                         EventID:       event.ID,
@@ -2509,96 +2558,96 @@ func (s *TicketService) Purchase(userID uint, input PurchaseInput) ([]*domain.Ti
                 }
         }</span>
 
-        <span class="cov8" title="1">if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error </span><span class="cov8" title="1">{
-                for _, ticket := range tickets </span><span class="cov8" title="1">{
-                        if err := s.ticketDAO.Create(ticket); err != nil </span><span class="cov0" title="0">{
+        <span class="cov5" title="6">if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error </span><span class="cov5" title="6">{
+                for _, ticket := range tickets </span><span class="cov5" title="6">{
+                        if err := s.ticketDAO.Create(ticket); err != nil </span><span class="cov1" title="1">{
                                 return err
                         }</span>
                 }
-                <span class="cov8" title="1">return s.eventDAO.IncrementTicketsSold(event.ID, int(input.Quantity))</span>
-        }); err != nil <span class="cov0" title="0">{
+                <span class="cov5" title="5">return s.eventDAO.IncrementTicketsSold(event.ID, int(input.Quantity))</span>
+        }); err != nil <span class="cov1" title="1">{
                 return nil, fmt.Errorf("purchase ticket: %w", err)
         }</span>
 
-        <span class="cov8" title="1">s.sendPurchaseEmail(userID, tickets[0], event)
+        <span class="cov5" title="5">s.sendPurchaseEmail(userID, tickets[0], event)
 
         return tickets, nil</span>
 }
 
-func (s *TicketService) GetByUser(userID uint) ([]domain.Ticket, error) <span class="cov8" title="1">{
+func (s *TicketService) GetByUser(userID uint) ([]domain.Ticket, error) <span class="cov1" title="1">{
         return s.ticketDAO.FindByUserID(userID)
 }</span>
 
 // Cancel marks the ticket as cancelled after verifying ownership.
 // Ownership violations return ErrNotFound to avoid leaking existence info.
-func (s *TicketService) Cancel(ticketID uint, requestingUserID uint) error <span class="cov8" title="1">{
+func (s *TicketService) Cancel(ticketID uint, requestingUserID uint) error <span class="cov6" title="8">{
         ticket, err := s.ticketDAO.FindByID(ticketID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">if ticket.UserID != requestingUserID </span><span class="cov8" title="1">{
+        <span class="cov6" title="7">if ticket.UserID != requestingUserID </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">if ticket.Status == "cancelled" </span><span class="cov8" title="1">{
+        <span class="cov5" title="6">if ticket.Status == "cancelled" </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrAlreadyCancelled)
         }</span>
 
-        <span class="cov8" title="1">now := time.Now()
+        <span class="cov5" title="5">now := time.Now()
         ticket.Status = "cancelled"
         ticket.CancelledAt = &amp;now
 
-        if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error </span><span class="cov8" title="1">{
-                if err := s.ticketDAO.Save(ticket); err != nil </span><span class="cov0" title="0">{
+        if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error </span><span class="cov5" title="5">{
+                if err := s.ticketDAO.Save(ticket); err != nil </span><span class="cov1" title="1">{
                         return err
                 }</span>
-                <span class="cov8" title="1">return s.eventDAO.DecrementTicketsSold(ticket.EventID)</span>
-        }); err != nil <span class="cov0" title="0">{
+                <span class="cov4" title="4">return s.eventDAO.DecrementTicketsSold(ticket.EventID)</span>
+        }); err != nil <span class="cov1" title="1">{
                 return fmt.Errorf("cancel ticket: %w", err)
         }</span>
 
-        <span class="cov8" title="1">s.sendCancellationEmail(requestingUserID, ticket)
+        <span class="cov4" title="4">s.sendCancellationEmail(requestingUserID, ticket)
 
         return nil</span>
 }
 
 // Transfer moves a ticket to another user. The target is resolved by email
 // (never by userID from the request body) to prevent user enumeration.
-func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferInput) error <span class="cov8" title="1">{
+func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferInput) error <span class="cov7" title="11">{
         ticket, err := s.ticketDAO.FindByID(ticketID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">if ticket.UserID != fromUserID </span><span class="cov0" title="0">{
+        <span class="cov6" title="10">if ticket.UserID != fromUserID </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">if ticket.Status == "cancelled" </span><span class="cov0" title="0">{
+        <span class="cov6" title="9">if ticket.Status == "cancelled" </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrAlreadyCancelled)
         }</span>
-        <span class="cov8" title="1">if ticket.Status == "transferred" </span><span class="cov0" title="0">{
+        <span class="cov6" title="8">if ticket.Status == "transferred" </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrAlreadyTransferred)
         }</span>
 
-        <span class="cov8" title="1">targetUser, err := s.userDAO.FindByEmail(input.ToUserEmail)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov6" title="7">targetUser, err := s.userDAO.FindByEmail(input.ToUserEmail)
+        if err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("target user %s: %w", input.ToUserEmail, ErrNotFound)
         }</span>
-        <span class="cov8" title="1">if fromUserID == targetUser.ID </span><span class="cov8" title="1">{
+        <span class="cov5" title="6">if fromUserID == targetUser.ID </span><span class="cov1" title="1">{
                 return fmt.Errorf("ticket %d: %w", ticketID, ErrInvalidTransfer)
         }</span>
 
-        <span class="cov8" title="1">now := time.Now()
+        <span class="cov5" title="5">now := time.Now()
         ticket.UserID = targetUser.ID
         ticket.TransferredToID = &amp;targetUser.ID
         ticket.TransferredAt = &amp;now
         ticket.Status = "transferred"
 
-        if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error </span><span class="cov8" title="1">{
+        if err := s.ticketDAO.WithTransaction(func(tx db.TxContext) error </span><span class="cov5" title="5">{
                 return s.ticketDAO.Save(ticket)
-        }</span>); err != nil <span class="cov0" title="0">{
+        }</span>); err != nil <span class="cov1" title="1">{
                 return fmt.Errorf("transfer ticket: %w", err)
         }</span>
 
-        <span class="cov8" title="1">s.sendTransferEmail(fromUserID, targetUser, ticket)
+        <span class="cov4" title="4">s.sendTransferEmail(fromUserID, targetUser, ticket)
 
         return nil</span>
 }
@@ -2608,55 +2657,55 @@ func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferI
 // because a notification failure must not roll back a successful operation.
 // ---------------------------------------------------------------------------
 
-func (s *TicketService) sendPurchaseEmail(userID uint, ticket *domain.Ticket, event *domain.Event) <span class="cov8" title="1">{
+func (s *TicketService) sendPurchaseEmail(userID uint, ticket *domain.Ticket, event *domain.Event) <span class="cov5" title="5">{
         user, err := s.userDAO.FindByID(userID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send purchase email: find user %d: %v", userID, err)
                 return
         }</span>
-        <span class="cov8" title="1">if err := s.emailClient.SendPurchaseConfirmation(user.Email, toTicketInfo(ticket, event)); err != nil </span><span class="cov0" title="0">{
+        <span class="cov4" title="4">if err := s.emailClient.SendPurchaseConfirmation(user.Email, toTicketInfo(ticket, event)); err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send purchase confirmation for ticket %d: %v", ticket.ID, err)
         }</span>
 }
 
-func (s *TicketService) sendCancellationEmail(userID uint, ticket *domain.Ticket) <span class="cov8" title="1">{
+func (s *TicketService) sendCancellationEmail(userID uint, ticket *domain.Ticket) <span class="cov4" title="4">{
         user, err := s.userDAO.FindByID(userID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send cancellation email: find user %d: %v", userID, err)
                 return
         }</span>
-        <span class="cov8" title="1">event, err := s.eventDAO.FindByID(ticket.EventID)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov3" title="3">event, err := s.eventDAO.FindByID(ticket.EventID)
+        if err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send cancellation email: find event %d: %v", ticket.EventID, err)
                 return
         }</span>
-        <span class="cov8" title="1">if err := s.emailClient.SendCancellationNotice(user.Email, toTicketInfo(ticket, event)); err != nil </span><span class="cov0" title="0">{
+        <span class="cov2" title="2">if err := s.emailClient.SendCancellationNotice(user.Email, toTicketInfo(ticket, event)); err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send cancellation notice for ticket %d: %v", ticket.ID, err)
         }</span>
 }
 
-func (s *TicketService) sendTransferEmail(fromUserID uint, toUser *domain.User, ticket *domain.Ticket) <span class="cov8" title="1">{
+func (s *TicketService) sendTransferEmail(fromUserID uint, toUser *domain.User, ticket *domain.Ticket) <span class="cov4" title="4">{
         fromUser, err := s.userDAO.FindByID(fromUserID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send transfer email: find fromUser %d: %v", fromUserID, err)
                 return
         }</span>
-        <span class="cov8" title="1">event, err := s.eventDAO.FindByID(ticket.EventID)
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov3" title="3">event, err := s.eventDAO.FindByID(ticket.EventID)
+        if err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send transfer email: find event %d: %v", ticket.EventID, err)
                 return
         }</span>
-        <span class="cov8" title="1">if err := s.emailClient.SendTransferNotice(fromUser.Email, toUser.Email, toTicketInfo(ticket, event)); err != nil </span><span class="cov0" title="0">{
+        <span class="cov2" title="2">if err := s.emailClient.SendTransferNotice(fromUser.Email, toUser.Email, toTicketInfo(ticket, event)); err != nil </span><span class="cov1" title="1">{
                 logger.Warn("send transfer notice for ticket %d: %v", ticket.ID, err)
         }</span>
 }
 
-func toTicketInfo(ticket *domain.Ticket, event *domain.Event) clients.TicketInfo <span class="cov8" title="1">{
+func toTicketInfo(ticket *domain.Ticket, event *domain.Event) clients.TicketInfo <span class="cov6" title="10">{
         loc := ""
-        if event.Location != nil </span><span class="cov0" title="0">{
+        if event.Location != nil </span><span class="cov1" title="1">{
                 loc = *event.Location
         }</span>
-        <span class="cov8" title="1">return clients.TicketInfo{
+        <span class="cov6" title="10">return clients.TicketInfo{
                 TicketID:   ticket.ID,
                 EventTitle: event.Title,
                 EventDate:  event.EventDate.Format("2006-01-02 15:04"),
@@ -2668,7 +2717,7 @@ func toTicketInfo(ticket *domain.Ticket, event *domain.Event) clients.TicketInfo
 var _ TicketServiceInterface = (*TicketService)(nil)
 </pre>
 		
-		<pre class="file" id="file20" style="display: none">package utils
+		<pre class="file" id="file21" style="display: none">package utils
 
 import (
         "os"
@@ -2683,7 +2732,7 @@ type Claims struct {
         jwt.RegisteredClaims
 }
 
-func GenerateJWT(userID uint, role string) (string, error) <span class="cov8" title="1">{
+func GenerateJWT(userID uint, role string) (string, error) <span class="cov4" title="2">{
         claims := Claims{
                 UserID: userID,
                 Role:   role,
@@ -2697,37 +2746,37 @@ func GenerateJWT(userID uint, role string) (string, error) <span class="cov8" ti
         return token.SignedString([]byte(jwtSecret()))
 }</span>
 
-func ValidateToken(tokenString string) (*Claims, error) <span class="cov8" title="1">{
+func ValidateToken(tokenString string) (*Claims, error) <span class="cov10" title="5">{
         token, err := jwt.ParseWithClaims(tokenString, &amp;Claims{}, keyFunc)
-        if err != nil </span><span class="cov8" title="1">{
+        if err != nil </span><span class="cov8" title="4">{
                 return nil, err
         }</span>
 
-        <span class="cov8" title="1">claims, ok := token.Claims.(*Claims)
+        <span class="cov1" title="1">claims, ok := token.Claims.(*Claims)
         if !ok || !token.Valid </span><span class="cov0" title="0">{
                 return nil, jwt.ErrSignatureInvalid
         }</span>
 
-        <span class="cov8" title="1">return claims, nil</span>
+        <span class="cov1" title="1">return claims, nil</span>
 }
 
-func keyFunc(token *jwt.Token) (interface{}, error) <span class="cov8" title="1">{
-        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov0" title="0">{
+func keyFunc(token *jwt.Token) (interface{}, error) <span class="cov7" title="3">{
+        if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok </span><span class="cov1" title="1">{
                 return nil, jwt.ErrSignatureInvalid
         }</span>
-        <span class="cov8" title="1">return []byte(jwtSecret()), nil</span>
+        <span class="cov4" title="2">return []byte(jwtSecret()), nil</span>
 }
 
-func jwtSecret() string <span class="cov8" title="1">{
+func jwtSecret() string <span class="cov8" title="4">{
         secret := os.Getenv("JWT_SECRET")
-        if secret == "" </span><span class="cov8" title="1">{
+        if secret == "" </span><span class="cov8" title="4">{
                 secret = "dev-secret-do-not-use-in-production"
         }</span>
-        <span class="cov8" title="1">return secret</span>
+        <span class="cov8" title="4">return secret</span>
 }
 </pre>
 		
-		<pre class="file" id="file21" style="display: none">package utils
+		<pre class="file" id="file22" style="display: none">package utils
 
 import (
         "golang.org/x/crypto/bcrypt"
@@ -2735,15 +2784,15 @@ import (
 
 const bcryptCost = 12
 
-func HashPassword(password string) (string, error) <span class="cov8" title="1">{
+func HashPassword(password string) (string, error) <span class="cov10" title="4">{
         bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)
         if err != nil </span><span class="cov0" title="0">{
                 return "", err
         }</span>
-        <span class="cov8" title="1">return string(bytes), nil</span>
+        <span class="cov10" title="4">return string(bytes), nil</span>
 }
 
-func CheckPassword(password, hash string) bool <span class="cov8" title="1">{
+func CheckPassword(password, hash string) bool <span class="cov8" title="3">{
         return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }</span>
 </pre>

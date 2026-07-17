@@ -64,6 +64,59 @@ func TestPurchase(t *testing.T) {
 	})
 }
 
+func TestPurchaseQuantityZeroDefaultsToOne(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	email := new(MockEmailClient)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+	event := &domain.Event{ID: 1, Status: "active", Capacity: 100, Price: 50}
+	eventDAO.On("FindByID", uint(1)).Return(event, nil)
+	ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Create", mock.MatchedBy(func(t *domain.Ticket) bool {
+		return t.Status == "active"
+	})).Return(nil)
+	eventDAO.On("IncrementTicketsSold", uint(1), 1).Return(nil)
+	userDAO.On("FindByID", uint(10)).Return(&domain.User{ID: 10, Email: "u@test.com"}, nil)
+	email.On("SendPurchaseConfirmation", "u@test.com", mock.Anything).Return(nil)
+
+	tickets, err := svc.Purchase(10, PurchaseInput{EventID: 1, Quantity: 0})
+	require.NoError(t, err)
+	require.Len(t, tickets, 1)
+	ticketDAO.AssertNumberOfCalls(t, "Create", 1)
+}
+
+func TestPurchaseCreateTransactionError(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, eventDAO, new(MockUserDAO), new(MockEmailClient))
+
+	event := &domain.Event{ID: 1, Status: "active", Capacity: 100}
+	eventDAO.On("FindByID", uint(1)).Return(event, nil)
+	ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Create", mock.AnythingOfType("*domain.Ticket")).Return(fmt.Errorf("create error"))
+
+	_, err := svc.Purchase(10, PurchaseInput{EventID: 1, Quantity: 1})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "create error")
+}
+
+func TestPurchaseCountError(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, eventDAO, new(MockUserDAO), new(MockEmailClient))
+
+	eventDAO.On("FindByID", uint(1)).Return(&domain.Event{ID: 1, Status: "active", Capacity: 100}, nil)
+	ticketDAO.On("CountActiveByEvent", uint(1)).Return(0, fmt.Errorf("count error"))
+
+	_, err := svc.Purchase(10, PurchaseInput{EventID: 1})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "count error")
+}
+
 func TestPurchasePresale(t *testing.T) {
 	now := time.Now()
 	presaleStart := now.Add(-2 * time.Hour)
@@ -291,6 +344,23 @@ func TestTransferTransferredTicket(t *testing.T) {
 	assert.ErrorIs(t, err, ErrAlreadyTransferred)
 }
 
+func TestTransferSaveError(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	userDAO := new(MockUserDAO)
+	svc := NewTicketService(ticketDAO, eventDAO, userDAO, new(MockEmailClient))
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	userDAO.On("FindByEmail", "target@test.com").Return(&domain.User{ID: 20, Email: "target@test.com"}, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(fmt.Errorf("save error"))
+
+	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "target@test.com"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "save error")
+}
+
 func TestTransferTargetNotFound(t *testing.T) {
 	ticketDAO := new(MockTicketDAO)
 	userDAO := new(MockUserDAO)
@@ -301,6 +371,21 @@ func TestTransferTargetNotFound(t *testing.T) {
 
 	err := svc.Transfer(1, 10, TransferInput{ToUserEmail: "nobody@test.com"})
 	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestCancelTicketSaveError(t *testing.T) {
+	eventDAO := new(MockEventDAO)
+	ticketDAO := new(MockTicketDAO)
+	svc := NewTicketService(ticketDAO, eventDAO, new(MockUserDAO), new(MockEmailClient))
+
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "active", EventID: 5}
+	ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+	ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+	ticketDAO.On("Save", mock.AnythingOfType("*domain.Ticket")).Return(fmt.Errorf("save error"))
+
+	err := svc.Cancel(1, 10)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "save error")
 }
 
 func TestCancelTicketNotFound(t *testing.T) {

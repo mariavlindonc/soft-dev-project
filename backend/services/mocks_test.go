@@ -123,7 +123,9 @@ func (m *MockTicketDAO) Save(ticket *domain.Ticket) error {
 
 func (m *MockTicketDAO) WithTransaction(fn func(db.TxContext) error) error {
 	args := m.Called(fn)
-	fn(nil)
+	if err := fn(nil); err != nil {
+		return err
+	}
 	return args.Error(0)
 }
 

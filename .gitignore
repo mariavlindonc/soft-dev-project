@@ -26,3 +26,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Go coverage artifacts
+coverage
+full_coverage
+tmpcov
+*.out

@@ -52,4 +52,21 @@ func TestValidateToken(t *testing.T) {
 		_, err := ValidateToken("")
 		assert.Error(t, err)
 	})
+
+	t.Run("non-HMAC signing method is rejected", func(t *testing.T) {
+		// Create a token signed with the "none" algorithm (not HMAC)
+		token := jwt.NewWithClaims(jwt.SigningMethodNone, Claims{
+			UserID: 1,
+			Role:   "admin",
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
+				IssuedAt:  jwt.NewNumericDate(time.Now()),
+			},
+		})
+		tokenString, err := token.SignedString(jwt.UnsafeAllowNoneSignatureType)
+		require.NoError(t, err)
+
+		_, err = ValidateToken(tokenString)
+		assert.Error(t, err)
+	})
 }

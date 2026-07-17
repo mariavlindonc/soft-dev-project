@@ -120,6 +120,52 @@ func TestGenerateToken(t *testing.T) {
 	assert.NotEmpty(t, token)
 }
 
+func TestRegisterNonNotFoundError(t *testing.T) {
+	userDAO := new(MockUserDAO)
+	svc := NewAuthService(userDAO)
+
+	userDAO.On("FindByEmail", "db@test.com").Return(nil, errors.New("db connection error"))
+
+	_, err := svc.Register(RegisterInput{
+		Name:     "DBErr",
+		Email:    "db@test.com",
+		Password: "securePass123",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "db connection error")
+}
+
+func TestRegisterCreateError(t *testing.T) {
+	userDAO := new(MockUserDAO)
+	svc := NewAuthService(userDAO)
+
+	userDAO.On("FindByEmail", "createfail@test.com").Return(nil, nil)
+	userDAO.On("Create", mock.AnythingOfType("*domain.User")).Return(errors.New("create error"))
+
+	_, err := svc.Register(RegisterInput{
+		Name:     "FailCreate",
+		Email:    "createfail@test.com",
+		Password: "securePass123",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "create error")
+}
+
+func TestRegisterFindError(t *testing.T) {
+	userDAO := new(MockUserDAO)
+	svc := NewAuthService(userDAO)
+
+	userDAO.On("FindByEmail", "db@test.com").Return(nil, errors.New("db connection error"))
+
+	_, err := svc.Register(RegisterInput{
+		Name:     "DBErr",
+		Email:    "db@test.com",
+		Password: "securePass123",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "db connection error")
+}
+
 func TestNotFoundErr(t *testing.T) {
 	err := ErrNotFound
 	assert.Equal(t, "resource not found", err.Error())

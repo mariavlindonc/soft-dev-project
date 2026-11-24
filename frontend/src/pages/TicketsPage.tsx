@@ -29,9 +29,9 @@ export default function TicketsPage() {
   async function handleCancel(id: number) {
     setCancellingId(id)
     setCancelConfirm(null)
-    const ok = await cancelTicket(id)
+    const cancelError = await cancelTicket(id)
     setCancellingId(null)
-    if (!ok) alert('No se pudo cancelar la entrada')
+    if (cancelError) alert(cancelError)
   }
 
   function openTransfer(ticketId: number, eventTitle: string) {
@@ -48,18 +48,13 @@ export default function TicketsPage() {
     }
     setTransferring(true)
     setTransferError(null)
-    try {
-      const ok = await transferTicket(transferModal.ticketId, transferEmail)
-      if (ok) {
-        setTransferModal(null)
-        refetch()
-      } else {
-        setTransferError('No se pudo transferir la entrada')
-      }
-    } catch {
-      setTransferError('Error al transferir la entrada')
-    } finally {
-      setTransferring(false)
+    const transferErr = await transferTicket(transferModal.ticketId, transferEmail)
+    setTransferring(false)
+    if (transferErr) {
+      setTransferError(transferErr)
+    } else {
+      setTransferModal(null)
+      refetch()
     }
   }
 

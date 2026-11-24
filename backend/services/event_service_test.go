@@ -341,6 +341,32 @@ func TestEventUpdate(t *testing.T) {
 		assert.Equal(t, "CODE123", *event.PresaleCode)
 	})
 
+	t.Run("update presale active without code keeps existing code", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		svc := NewEventService(eventDAO, new(MockTicketDAO))
+
+		eventDate := time.Now().Add(48 * time.Hour)
+		existingCode := "OLDCODE"
+		existing := &domain.Event{ID: 1, Status: "active", EventDate: eventDate, PresaleActive: true, PresaleCode: &existingCode}
+		eventDAO.On("FindByID", uint(1)).Return(existing, nil)
+		eventDAO.On("Update", mock.AnythingOfType("*domain.Event")).Return(nil)
+
+		presaleActive := true
+		emptyCode := ""
+		presaleStartStr := time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+		generalSaleStr := time.Now().Add(24 * time.Hour).Format(time.RFC3339)
+
+		event, err := svc.Update(1, UpdateEventInput{
+			PresaleActive:    &presaleActive,
+			PresaleCode:      &emptyCode,
+			PresaleStartDate: &presaleStartStr,
+			GeneralSaleDate:  &generalSaleStr,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, event.PresaleCode)
+		assert.Equal(t, "OLDCODE", *event.PresaleCode)
+	})
+
 	t.Run("update presale active missing fields returns ErrInvalidInput", func(t *testing.T) {
 		eventDAO := new(MockEventDAO)
 		svc := NewEventService(eventDAO, new(MockTicketDAO))

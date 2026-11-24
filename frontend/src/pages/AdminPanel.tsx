@@ -171,7 +171,9 @@ type FormErrors = Partial<Record<keyof CreateEventData, string>>
 // Validaciones preventivas del formulario de eventos. Replican las reglas del
 // backend (EventService.Create / Update y validatePresaleConfig) para avisar
 // antes de enviar la request.
-function validateEventForm(form: CreateEventData, isEdit: boolean): FormErrors {
+// hasExistingCode: al editar un evento que ya tenía preventa, el código es
+// opcional (si se deja vacío, el backend conserva el actual).
+function validateEventForm(form: CreateEventData, isEdit: boolean, hasExistingCode: boolean): FormErrors {
   const errors: FormErrors = {}
 
   if (!form.title.trim()) {
@@ -206,7 +208,7 @@ function validateEventForm(form: CreateEventData, isEdit: boolean): FormErrors {
   }
 
   if (form.presale_active) {
-    if (!form.presale_code?.trim()) {
+    if (!hasExistingCode && !form.presale_code?.trim()) {
       errors.presale_code = 'El código de preventa es obligatorio'
     }
 
@@ -254,6 +256,9 @@ function AdminEventForm() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
+  // El backend nunca devuelve el código de preventa, así que guardamos si el
+  // evento ya tenía preventa para no obligar a reingresarlo al editar.
+  const [hasExistingCode, setHasExistingCode] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -274,6 +279,7 @@ function AdminEventForm() {
           presale_start_date: event.presale_start_date?.slice(0, 16) ?? '',
           general_sale_date: event.general_sale_date?.slice(0, 16) ?? '',
         })
+        setHasExistingCode(event.presale_active)
         setLoading(false)
       })
       .catch(() => {
@@ -295,7 +301,7 @@ function AdminEventForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    const errors = validateEventForm(form, isEdit)
+    const errors = validateEventForm(form, isEdit, hasExistingCode)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
       setError('Revisá los campos marcados antes de guardar')
@@ -406,8 +412,8 @@ function AdminEventForm() {
           <>
             <div className="admin-form-row">
               <div className="form-group">
-                <label htmlFor="presale_code">Código de preventa *</label>
-                <input id="presale_code" required={form.presale_active} className={fieldErrors.presale_code ? 'input-error' : ''} placeholder={isEdit ? "Reingresar el código" : ""} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
+                <label htmlFor="presale_code">Código de preventa{hasExistingCode ? '' : ' *'}</label>
+                <input id="presale_code" required={form.presale_active && !hasExistingCode} className={fieldErrors.presale_code ? 'input-error' : ''} placeholder={hasExistingCode ? 'Dejar vacío para mantener el código actual' : ''} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
                 {fieldErrors.presale_code && <p className="form-error">{fieldErrors.presale_code}</p>}
               </div>
               <div className="form-group">

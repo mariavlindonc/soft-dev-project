@@ -75,12 +75,15 @@ docker-compose down -v        # detiene y elimina los volúmenes (borra la base)
 
 Los datos seed (13 usuarios, 23 eventos, 35 tickets) se cargan automaticamente al iniciar la base por primera vez. Algunos usuarios de prueba:
 
-| Email                       | Password    | Rol      |
-| --------------------------- | ----------- | -------- |
-| carlos@example.com          | carlos123   | admin    |
-| ana@example.com             | ana123      | admin    |
-| sofia@example.com           | sofia123    | cliente  |
-| lautaro@example.com         | lautaro123  | cliente  |
+| Email                       | Password     | Rol      |
+| --------------------------- | ------------ | -------- |
+| carlos@ceibo.com            | carlos123    | admin    |
+| ana@ceibo.com               | analucia123  | admin    |
+| pedro@ceibo.com             | pedro123     | admin    |
+| sofia@gmail.com             | sofia123     | cliente  |
+| lautaro@hotmail.com         | lautaro123   | cliente  |
+
+El resto de los clientes sigue el patron `[nombre]123` (ver `database/data.sql`).
 
 ### Opcion 2: Local (sin Docker)
 
@@ -93,6 +96,7 @@ cd soft-dev-project
 cd backend
 cp .env.example .env   # configurar credenciales de MySQL
 go mod tidy
+go run ./cmd/gencerts  # genera certs/server.crt y certs/server.key (solo la primera vez)
 go run main.go
 
 # En otra terminal - Frontend
@@ -315,7 +319,21 @@ docker-compose exec backend go test ./... -v -cover
 
 ## Bonus Track
 
-**Reserva de entradas**: funcionalidad adicional que permite al usuario reservar una entrada temporalmente antes de concretar la compra. La reserva ocupa el cupo del evento durante un periodo de tiempo limitado, y si no se confirma la compra en ese lapso, la entrada se libera automaticamente y el cupo vuelve a estar disponible para otros usuarios.
+**Preventa con codigo de acceso y fases de venta**: un administrador puede activar una preventa para un evento, definiendo un codigo de acceso, la fecha de inicio de la preventa y la fecha de inicio de la venta general (inicio de preventa < venta general < fecha del evento). Segun el momento en que se intenta comprar, el evento esta en una de estas fases:
+
+| Fase           | Quien puede comprar                                   |
+| -------------- | ----------------------------------------------------- |
+| `not_yet_open` | Nadie (la preventa todavia no empezo)                 |
+| `presale`      | Solo quien ingresa el codigo de preventa correcto     |
+| `public`       | Cualquier usuario registrado                          |
+| `no_presale`   | Cualquier usuario registrado (evento sin preventa)    |
+
+Donde esta implementado:
+
+- **Dominio**: `backend/domain/event.go` — campos `PresaleActive`, `PresaleCode`, `PresaleStartDate`, `GeneralSaleDate` y el metodo `CurrentSalePhase(now)`, que calcula la fase actual.
+- **Service**: `TicketService.Purchase` valida la fase y el codigo antes de vender (`ErrSalesNotOpen`, `ErrPresaleCodeRequired`, `ErrInvalidPresaleCode`). `EventService` valida la configuracion de la preventa al crear o editar un evento.
+- **Endpoint**: `GET /api/events/:id/sale-status` devuelve la fase de venta actual del evento.
+- **Frontend**: el detalle del evento pide el codigo cuando el evento esta en fase `presale`, y el panel de administracion permite configurar la preventa en el formulario de eventos.
 
 ---
 

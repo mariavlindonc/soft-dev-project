@@ -18,8 +18,11 @@ const eventImages = [
   event9Img,
 ]
 
-export const eventImagesArray = eventImages
-
-export function getRandomEventImage(): string {
-  return eventImages[Math.floor(Math.random() * eventImages.length)]
+// Devuelve la imagen del evento si tiene una URL válida. Si no, elige una de
+// respaldo a partir del id, así el mismo evento muestra siempre la misma foto
+// (en la tarjeta, en el detalle y después de recargar).
+export function getEventImage(id: number, imageUrl?: string | null): string {
+  const url = imageUrl?.trim()
+  if (url && url.startsWith('http')) return url
+  return eventImages[Math.abs(id) % eventImages.length]
 }

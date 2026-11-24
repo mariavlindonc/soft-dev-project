@@ -166,6 +166,70 @@ function AdminEventList() {
   )
 }
 
+type FormErrors = Partial<Record<keyof CreateEventData, string>>
+
+// Validaciones preventivas del formulario de eventos. Replican las reglas del
+// backend (EventService.Create / Update y validatePresaleConfig) para avisar
+// antes de enviar la request.
+function validateEventForm(form: CreateEventData, isEdit: boolean): FormErrors {
+  const errors: FormErrors = {}
+
+  if (!form.title.trim()) {
+    errors.title = 'El título es obligatorio'
+  }
+
+  const eventDate = form.event_date ? new Date(form.event_date) : null
+  if (!eventDate || isNaN(eventDate.getTime())) {
+    errors.event_date = 'La fecha del evento es obligatoria'
+  } else if (!isEdit && eventDate.getTime() <= Date.now()) {
+    errors.event_date = 'La fecha del evento tiene que ser futura'
+  }
+
+  if (!Number.isInteger(form.capacity) || form.capacity < 1) {
+    errors.capacity = 'La capacidad tiene que ser un número entero mayor o igual a 1'
+  }
+
+  if (Number.isNaN(form.price) || form.price < 0) {
+    errors.price = 'El precio no puede ser negativo'
+  }
+
+  if (
+    form.duration_minutes != null &&
+    (!Number.isInteger(form.duration_minutes) || form.duration_minutes < 1)
+  ) {
+    errors.duration_minutes = 'La duración tiene que ser un número entero de al menos 1 minuto'
+  }
+
+  const imageUrl = form.image_url?.trim()
+  if (imageUrl && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+    errors.image_url = 'La URL tiene que empezar con http:// o https://'
+  }
+
+  if (form.presale_active) {
+    if (!form.presale_code?.trim()) {
+      errors.presale_code = 'El código de preventa es obligatorio'
+    }
+
+    const presaleStart = form.presale_start_date ? new Date(form.presale_start_date) : null
+    const generalSale = form.general_sale_date ? new Date(form.general_sale_date) : null
+
+    if (!presaleStart) {
+      errors.presale_start_date = 'La fecha de inicio de preventa es obligatoria'
+    }
+    if (!generalSale) {
+      errors.general_sale_date = 'La fecha de venta general es obligatoria'
+    }
+    if (presaleStart && generalSale && presaleStart >= generalSale) {
+      errors.presale_start_date = 'La preventa tiene que empezar antes de la venta general'
+    }
+    if (generalSale && eventDate && generalSale >= eventDate) {
+      errors.general_sale_date = 'La venta general tiene que empezar antes del evento'
+    }
+  }
+
+  return errors
+}
+
 function AdminEventForm() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -189,6 +253,7 @@ function AdminEventForm() {
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
 
   useEffect(() => {
     if (!id) return
@@ -217,12 +282,26 @@ function AdminEventForm() {
       })
   }, [id])
 
-  function handleChange(field: string, value: string | number | boolean) {
+  function handleChange(field: keyof CreateEventData, value: string | number | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    const errors = validateEventForm(form, isEdit)
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      setError('Revisá los campos marcados antes de guardar')
+      return
+    }
+
     setSaving(true)
     setError(null)
     try {
@@ -264,7 +343,8 @@ function AdminEventForm() {
       <form className="admin-form" onSubmit={handleSubmit} noValidate>
         <div className="form-group">
           <label htmlFor="title">Título *</label>
-          <input id="title" required value={form.title} onChange={(e) => handleChange('title', e.target.value)} />
+          <input id="title" required className={fieldErrors.title ? 'input-error' : ''} value={form.title} onChange={(e) => handleChange('title', e.target.value)} />
+          {fieldErrors.title && <p className="form-error">{fieldErrors.title}</p>}
         </div>
 
         <div className="form-group">
@@ -286,28 +366,33 @@ function AdminEventForm() {
         <div className="admin-form-row">
           <div className="form-group">
             <label htmlFor="event_date">Fecha del evento *</label>
-            <input id="event_date" type="datetime-local" required value={form.event_date} onChange={(e) => handleChange('event_date', e.target.value)} />
+            <input id="event_date" type="datetime-local" required className={fieldErrors.event_date ? 'input-error' : ''} value={form.event_date} onChange={(e) => handleChange('event_date', e.target.value)} />
+            {fieldErrors.event_date && <p className="form-error">{fieldErrors.event_date}</p>}
           </div>
           <div className="form-group">
             <label htmlFor="duration_minutes">Duración (min)</label>
-            <input id="duration_minutes" type="number" min={1} value={form.duration_minutes ?? ''} onChange={(e) => handleChange('duration_minutes', Number(e.target.value))} />
+            <input id="duration_minutes" type="number" min={1} className={fieldErrors.duration_minutes ? 'input-error' : ''} value={form.duration_minutes ?? ''} onChange={(e) => handleChange('duration_minutes', Number(e.target.value))} />
+            {fieldErrors.duration_minutes && <p className="form-error">{fieldErrors.duration_minutes}</p>}
           </div>
         </div>
 
         <div className="admin-form-row">
           <div className="form-group">
             <label htmlFor="capacity">Capacidad *</label>
-            <input id="capacity" type="number" required min={1} value={form.capacity} onChange={(e) => handleChange('capacity', Number(e.target.value))} />
+            <input id="capacity" type="number" required min={1} className={fieldErrors.capacity ? 'input-error' : ''} value={form.capacity} onChange={(e) => handleChange('capacity', Number(e.target.value))} />
+            {fieldErrors.capacity && <p className="form-error">{fieldErrors.capacity}</p>}
           </div>
           <div className="form-group">
             <label htmlFor="price">Precio *</label>
-            <input id="price" type="number" required min={0} step="0.01" value={form.price} onChange={(e) => handleChange('price', Number(e.target.value))} />
+            <input id="price" type="number" required min={0} step="0.01" className={fieldErrors.price ? 'input-error' : ''} value={form.price} onChange={(e) => handleChange('price', Number(e.target.value))} />
+            {fieldErrors.price && <p className="form-error">{fieldErrors.price}</p>}
           </div>
         </div>
 
         <div className="form-group">
           <label htmlFor="image_url">URL de imagen</label>
-          <input id="image_url" value={form.image_url ?? ''} onChange={(e) => handleChange('image_url', e.target.value)} />
+          <input id="image_url" className={fieldErrors.image_url ? 'input-error' : ''} value={form.image_url ?? ''} onChange={(e) => handleChange('image_url', e.target.value)} />
+          {fieldErrors.image_url && <p className="form-error">{fieldErrors.image_url}</p>}
         </div>
 
         <h2 className="admin-section-title">Preventa</h2>
@@ -322,16 +407,19 @@ function AdminEventForm() {
             <div className="admin-form-row">
               <div className="form-group">
                 <label htmlFor="presale_code">Código de preventa *</label>
-                <input id="presale_code" required={form.presale_active} placeholder={isEdit ? "Reingresar el código" : ""} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
+                <input id="presale_code" required={form.presale_active} className={fieldErrors.presale_code ? 'input-error' : ''} placeholder={isEdit ? "Reingresar el código" : ""} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
+                {fieldErrors.presale_code && <p className="form-error">{fieldErrors.presale_code}</p>}
               </div>
               <div className="form-group">
-                <label htmlFor="presale_start_date">Inicio preventa</label>
-                <input id="presale_start_date" type="datetime-local" value={form.presale_start_date ?? ''} onChange={(e) => handleChange('presale_start_date', e.target.value)} />
+                <label htmlFor="presale_start_date">Inicio preventa *</label>
+                <input id="presale_start_date" type="datetime-local" className={fieldErrors.presale_start_date ? 'input-error' : ''} value={form.presale_start_date ?? ''} onChange={(e) => handleChange('presale_start_date', e.target.value)} />
+                {fieldErrors.presale_start_date && <p className="form-error">{fieldErrors.presale_start_date}</p>}
               </div>
             </div>
             <div className="form-group">
-              <label htmlFor="general_sale_date">Inicio venta general</label>
-              <input id="general_sale_date" type="datetime-local" value={form.general_sale_date ?? ''} onChange={(e) => handleChange('general_sale_date', e.target.value)} />
+              <label htmlFor="general_sale_date">Inicio venta general *</label>
+              <input id="general_sale_date" type="datetime-local" className={fieldErrors.general_sale_date ? 'input-error' : ''} value={form.general_sale_date ?? ''} onChange={(e) => handleChange('general_sale_date', e.target.value)} />
+              {fieldErrors.general_sale_date && <p className="form-error">{fieldErrors.general_sale_date}</p>}
             </div>
           </>
         )}

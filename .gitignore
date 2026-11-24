@@ -32,3 +32,5 @@ coverage
 full_coverage
 tmpcov
 *.out
+# Notas locales de trabajo
+mejoras-ceibo*.md

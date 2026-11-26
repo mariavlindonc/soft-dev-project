@@ -123,7 +123,8 @@ export default function TicketsPage() {
                     </button>
                   </>
                 )}
-                {ticket.status === 'transferred' && (
+                {/* Quien la recibió puede cancelarla; quien la transfirió solo la ve */}
+                {ticket.status === 'transferred' && !ticket.transferred_out && (
                   <button
                     type="button"
                     className="btn btn-danger btn-sm"

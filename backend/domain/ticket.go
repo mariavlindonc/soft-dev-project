@@ -20,3 +20,18 @@ type Ticket struct {
 	Event         Event `gorm:"foreignKey:EventID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT" json:"event"`
 	TransferredTo *User `gorm:"foreignKey:TransferredToID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL" json:"transferred_to,omitempty"`
 }
+
+// HolderID returns who currently holds the ticket. UserID is always the
+// original buyer; after a transfer the ticket belongs to TransferredToID.
+func (t *Ticket) HolderID() uint {
+	if t.Status == "transferred" && t.TransferredToID != nil {
+		return *t.TransferredToID
+	}
+	return t.UserID
+}
+
+// TransferredOutBy reports whether userID is the original buyer who gave
+// this ticket away (they still see it, but can no longer act on it).
+func (t *Ticket) TransferredOutBy(userID uint) bool {
+	return t.Status == "transferred" && t.UserID == userID && t.HolderID() != userID
+}

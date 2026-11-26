@@ -39,9 +39,12 @@ type ticketResponse struct {
 	PurchasedAt   string  `json:"purchased_at"`
 	EventTitle    string  `json:"event_title"`
 	EventDate     string  `json:"event_date"`
+	// TransferredOut is true when the requesting user transferred this
+	// ticket to someone else: it is shown as history, without actions.
+	TransferredOut bool `json:"transferred_out"`
 }
 
-func toTicketResponse(t *domain.Ticket) ticketResponse {
+func toTicketResponse(t *domain.Ticket, requestingUserID uint) ticketResponse {
 	eventTitle := ""
 	eventDate := ""
 	if t.Event.Title != "" {
@@ -58,6 +61,7 @@ func toTicketResponse(t *domain.Ticket) ticketResponse {
 		PurchasedAt:   t.PurchasedAt.Format(time.RFC3339),
 		EventTitle:    eventTitle,
 		EventDate:     eventDate,
+		TransferredOut: t.TransferredOutBy(requestingUserID),
 	}
 }
 
@@ -83,7 +87,7 @@ func (h *TicketController) Purchase(c *gin.Context) {
 
 	resp := make([]ticketResponse, len(tickets))
 	for i, t := range tickets {
-		resp[i] = toTicketResponse(t)
+		resp[i] = toTicketResponse(t, userID)
 	}
 	c.JSON(http.StatusCreated, resp)
 }
@@ -99,7 +103,7 @@ func (h *TicketController) GetMyTickets(c *gin.Context) {
 
 	resp := make([]ticketResponse, 0, len(tickets))
 	for _, t := range tickets {
-		resp = append(resp, toTicketResponse(&t))
+		resp = append(resp, toTicketResponse(&t, userID))
 	}
 
 	c.JSON(http.StatusOK, resp)

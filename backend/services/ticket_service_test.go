@@ -220,6 +220,38 @@ func TestCancelTicket(t *testing.T) {
 		err := svc.Cancel(1, userID)
 		assert.ErrorIs(t, err, ErrAlreadyCancelled)
 	})
+
+	t.Run("recipient can cancel a transferred ticket", func(t *testing.T) {
+		eventDAO := new(MockEventDAO)
+		ticketDAO := new(MockTicketDAO)
+		userDAO := new(MockUserDAO)
+		email := new(MockEmailClient)
+		svc := NewTicketService(ticketDAO, eventDAO, userDAO, email)
+
+		recipientID := uint(20)
+		ticket := &domain.Ticket{ID: 1, UserID: userID, TransferredToID: &recipientID, Status: "transferred", EventID: 5}
+		ticketDAO.On("FindByID", uint(1)).Return(ticket, nil)
+		ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
+		ticketDAO.On("Save", mock.Anything).Return(nil)
+		eventDAO.On("DecrementTicketsSold", uint(5)).Return(nil)
+		userDAO.On("FindByID", recipientID).Return(&domain.User{ID: recipientID, Email: "r@test.com"}, nil)
+		eventDAO.On("FindByID", uint(5)).Return(&domain.Event{ID: 5, Title: "Concert"}, nil)
+		email.On("SendCancellationNotice", "r@test.com", mock.Anything).Return(nil)
+
+		err := svc.Cancel(1, recipientID)
+		require.NoError(t, err)
+	})
+
+	t.Run("original buyer cannot cancel a transferred ticket", func(t *testing.T) {
+		ticketDAO := new(MockTicketDAO)
+		svc := NewTicketService(ticketDAO, new(MockEventDAO), new(MockUserDAO), new(MockEmailClient))
+
+		recipientID := uint(20)
+		ticketDAO.On("FindByID", uint(1)).Return(&domain.Ticket{ID: 1, UserID: userID, TransferredToID: &recipientID, Status: "transferred"}, nil)
+
+		err := svc.Cancel(1, userID)
+		assert.ErrorIs(t, err, ErrNotFound)
+	})
 }
 
 func TestTransfer(t *testing.T) {
@@ -238,7 +270,8 @@ func TestTransfer(t *testing.T) {
 		userDAO.On("FindByEmail", "target@test.com").Return(targetUser, nil)
 		ticketDAO.On("WithTransaction", mock.Anything).Return(nil)
 		ticketDAO.On("Save", mock.MatchedBy(func(t *domain.Ticket) bool {
-			return t.Status == "transferred" && *t.TransferredToID == 20
+			// UserID keeps the original buyer so they still see the ticket.
+			return t.Status == "transferred" && *t.TransferredToID == 20 && t.UserID == fromUserID
 		})).Return(nil)
 		userDAO.On("FindByID", fromUserID).Return(&domain.User{ID: fromUserID, Email: "from@test.com"}, nil)
 		eventDAO.On("FindByID", uint(5)).Return(&domain.Event{ID: 5, Title: "Concert"}, nil)

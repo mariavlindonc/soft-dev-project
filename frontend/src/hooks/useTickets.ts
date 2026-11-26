@@ -59,7 +59,7 @@ export function useTickets() {
       await ticketsApi.transferTicket(id, toEmail)
       setTickets((prev) =>
         prev.map((t) =>
-          t.id === id ? { ...t, status: 'transferred' as const, transferred_at: new Date().toISOString() } : t,
+          t.id === id ? { ...t, status: 'transferred' as const, transferred_out: true, transferred_at: new Date().toISOString() } : t,
         ),
       )
       return null

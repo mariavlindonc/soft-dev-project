@@ -90,7 +90,7 @@ func (s *ReportService) GetEventReport(eventID uint) (*EventReport, error) {
 	activeTickets, err := s.ticketDAO.FindActiveByEvent(eventID)
 	if err == nil {
 		for _, t := range activeTickets {
-			user, uerr := s.userDAO.FindByID(t.UserID)
+			user, uerr := s.userDAO.FindByID(t.HolderID())
 			if uerr == nil {
 				report.Buyers = append(report.Buyers, BuyerInfo{
 					UserID: user.ID,

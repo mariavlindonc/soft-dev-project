@@ -54,8 +54,8 @@ VALUES
 -- ============================================================
 -- Tickets (35)
 -- Sofía (4): 5 tickets  |  Lautaro (5): 3  |  Camila (6): 4
--- Facundo (7): 4        |  Lucía (8): 4     |  Mateo (9): 5
--- Valentina (10): 4     |  Santiago (11): 4 |  Florencia (12): 1
+-- Facundo (7): 4        |  Lucía (8): 4 (+1 recibida de Santiago)  |  Mateo (9): 5
+-- Valentina (10): 4     |  Santiago (11): 4 (1 transferida)        |  Florencia (12): 1
 -- Agustín (13): 1
 -- ============================================================
 INSERT INTO tickets (user_id, event_id, status, purchase_price, purchased_at, cancelled_at, transferred_at, transferred_to_id)
@@ -98,6 +98,7 @@ VALUES
     (10, 21, 'active',    100000.00, '2026-11-10 12:00:00', NULL, NULL, NULL),
     -- Santiago (ID 11)
     (11,  2,  'active',     30000.00, '2026-08-05 16:00:00', NULL, NULL, NULL),
+    -- Comprada por Santiago (user_id) y transferida a Lucía (transferred_to_id)
     (11,  4,  'transferred',20000.00, '2026-05-12 18:00:00', NULL, '2026-06-01 12:00:00', 8),
     (11, 10,  'active',     20000.00, '2026-06-10 10:00:00', NULL, NULL, NULL),
     (11, 22,  'active',     80000.00, '2026-10-01 10:00:00', NULL, NULL, NULL),

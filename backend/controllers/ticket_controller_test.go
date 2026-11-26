@@ -393,9 +393,18 @@ func TestTicketResponseWithEvent(t *testing.T) {
 		},
 	}
 
-	resp := toTicketResponse(ticket)
+	resp := toTicketResponse(ticket, 10)
 	assert.Equal(t, "Concert", resp.EventTitle)
 	assert.Equal(t, eventDate.Format(time.RFC3339), resp.EventDate)
+	assert.False(t, resp.TransferredOut)
+}
+
+func TestTicketResponseTransferredOut(t *testing.T) {
+	recipientID := uint(20)
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "transferred", TransferredToID: &recipientID}
+
+	assert.True(t, toTicketResponse(ticket, 10).TransferredOut, "buyer gave it away")
+	assert.False(t, toTicketResponse(ticket, 20).TransferredOut, "recipient holds it")
 }
 
 func TestTicketResponseWithoutEvent(t *testing.T) {
@@ -408,7 +417,7 @@ func TestTicketResponseWithoutEvent(t *testing.T) {
 		PurchasedAt:   time.Now(),
 	}
 
-	resp := toTicketResponse(ticket)
+	resp := toTicketResponse(ticket, 10)
 	assert.Equal(t, "", resp.EventTitle)
 	assert.Equal(t, "", resp.EventDate)
 }

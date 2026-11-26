@@ -232,6 +232,31 @@ func TestTransferTicket(t *testing.T) {
 }
 
 func TestPurchaseTicketErrors(t *testing.T) {
+	presaleErrors := map[string]error{
+		"sales not open":         services.ErrSalesNotOpen,
+		"presale code required":  services.ErrPresaleCodeRequired,
+		"invalid presale code":   services.ErrInvalidPresaleCode,
+	}
+	for name, presaleErr := range presaleErrors {
+		t.Run(name+" returns 400", func(t *testing.T) {
+			mockSvc := new(MockTicketService)
+			ctrl := NewTicketController(mockSvc)
+
+			mockSvc.On("Purchase", uint(10), mock.Anything).Return(nil, fmt.Errorf("event 1: %w", presaleErr))
+
+			r := setupRouter()
+			r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
+
+			body := `{"event_id":1,"quantity":1}`
+			req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+	}
+
 	t.Run("no capacity returns 400", func(t *testing.T) {
 		mockSvc := new(MockTicketService)
 		ctrl := NewTicketController(mockSvc)

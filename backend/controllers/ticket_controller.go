@@ -72,7 +72,8 @@ func (h *TicketController) Purchase(c *gin.Context) {
 
 	tickets, err := h.ticketService.Purchase(userID, services.PurchaseInput{EventID: req.EventID, Quantity: req.Quantity, PresaleCode: req.PresaleCode})
 	if err != nil {
-		if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) {
+		if isNotFound(err) || errors.Is(err, services.ErrEventCancelled) || errors.Is(err, services.ErrNoCapacity) ||
+			errors.Is(err, services.ErrSalesNotOpen) || errors.Is(err, services.ErrPresaleCodeRequired) || errors.Is(err, services.ErrInvalidPresaleCode) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

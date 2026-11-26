@@ -30,7 +30,7 @@ type createEventRequest struct {
 	EventDate        string  `json:"event_date"         binding:"required"`
 	DurationMinutes  int     `json:"duration_minutes"`
 	Capacity         int     `json:"capacity"           binding:"required,min=1"`
-	Price            float64 `json:"price"              binding:"required,min=0"`
+	Price            float64 `json:"price"              binding:"min=0"`
 	PresaleActive    bool    `json:"presale_active"`
 	PresaleCode      string  `json:"presale_code"`
 	PresaleStartDate string  `json:"presale_start_date"`

@@ -31,7 +31,7 @@ El usuario ingresa al sitio, explora el catalogo de eventos con filtros por cate
 | **Base de datos** | MySQL 8                                       |
 | **Frontend**      | React 19, TypeScript, Vite, React Router, Axios |
 | **Autenticacion** | JWT (golang-jwt), bcrypt                      |
-| **Testing**       | Go testing + testify + httptest + SQLite en memoria (DAOs) |
+| **Testing**       | Backend: Go testing + testify + httptest + SQLite en memoria (DAOs). Frontend: Vitest + React Testing Library |
 | **DevOps**        | Docker, Docker Compose, Nginx                 |
 | **Seguridad**     | TLS, headers de seguridad, CORS configurable  |
 
@@ -116,8 +116,9 @@ Las variables de entorno se configuran en `backend/.env` (ver `.env.example`). E
 cd backend
 go test ./... -cover
 
-# Frontend: chequeo de tipos, build y lint
+# Frontend: tests unitarios y de componentes, chequeo de tipos y lint
 cd frontend
+npm test
 npm run build
 npm run lint
 ```
@@ -384,6 +385,26 @@ go tool cover -html=coverage.out      # abre el reporte en el navegador
 | `event_controller_test.go`   | GetAll (200, filtros category/date/price, filtros invalidos, error servicio), GetByID (200, 404, 400, 500), Create (201, 201 evento gratis con precio 0, 400 precio negativo, 400 campos faltantes, 400 fecha invalida, 400 service error, 500), Update (200, 404, 400, 400 cancelled, 400 json invalido, 500), Delete (204, 404, 400), GetSaleStatus (200 presale, 400 invalid id, 404, cancelled, sold out, no presale, 500), salePhaseMessage (todas las fases) |
 | `ticket_controller_test.go`  | Purchase (201, 400 evento cancelado, 400 sin capacidad, 400 no encontrado, 400 campo faltante, 400 venta no abierta, 400 falta codigo de preventa, 400 codigo de preventa invalido, 500), GetMyTickets (200, 500, empty), Cancel (204, 404, 400, 500), Transfer (200, 400 campo faltante, 400 invalid id, 404, 500), toTicketResponse (con/sin evento) |
 | `admin_controller_test.go`   | GetReports (200, 500), GetEventReport (200, 404, 400, 500), toGlobalReportResponse, toEventReportResponse                                                                                                  |
+
+### Tests de frontend (testing avanzado)
+
+Como capa extra de testing, el frontend tiene **43 tests** con **Vitest** y **React Testing Library** (entorno `jsdom`), que corren sin necesidad del backend.
+
+```bash
+cd frontend
+npm test              # corre todos los tests una vez
+npm run test:watch    # modo watch: re-ejecuta al guardar
+```
+
+| Archivo                      | Tipo                  | Casos cubiertos                                                                                                  |
+| ---------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `eventValidation.test.ts`    | Unitario              | Validaciones del formulario de eventos: titulo, fecha futura (solo al crear), capacidad, precio (0 es valido), duracion, URL de imagen, reglas de preventa y codigo opcional al editar |
+| `apiError.test.ts`           | Unitario              | Traduccion de cada error del backend al castellano, mensaje generico para errores desconocidos, backend caido y errores que no son de la API |
+| `eventImages.test.ts`        | Unitario              | Imagen propia vs. imagen de respaldo, misma imagen para el mismo evento                                           |
+| `format.test.ts`             | Unitario              | Precio ("Gratis" y separador de miles) y formato de fecha y hora                                                  |
+| `PaymentModal.test.tsx`      | Funcional (componente) | Renderiza el modal de compra y simula clics: compra exitosa, error con el motivo real, backend caido y cancelar |
+
+Los tests estan junto al codigo que prueban (`*.test.ts` / `*.test.tsx`) y no se incluyen en el build de produccion.
 
 ---
 

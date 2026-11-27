@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getApiErrorMessage } from '../../utils/apiError'
 
 interface PaymentModalProps {
   eventTitle: string
@@ -18,8 +19,8 @@ export default function PaymentModal({ eventTitle, quantity, total, onConfirm, o
     try {
       await onConfirm()
       onClose()
-    } catch {
-      setError('Error al procesar la compra. Intentá de nuevo.')
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Error al procesar la compra. Intentá de nuevo.'))
       setConfirming(false)
     }
   }

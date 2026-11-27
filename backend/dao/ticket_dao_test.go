@@ -30,6 +30,14 @@ func seedTicketData(t *testing.T, gdb *gorm.DB) (*domain.User, *domain.Event) {
 	return u, e
 }
 
+func ticketIDs(tickets []domain.Ticket) []uint {
+	ids := make([]uint, len(tickets))
+	for i, t := range tickets {
+		ids[i] = t.ID
+	}
+	return ids
+}
+
 func TestTicketDAO_Create(t *testing.T) {
 	gdb := setupTestDB(t)
 	dao := NewTicketDAO(gdb)
@@ -84,6 +92,24 @@ func TestTicketDAO_FindByUserID(t *testing.T) {
 		tickets, err := dao.FindByUserID(u.ID)
 		require.NoError(t, err)
 		assert.Len(t, tickets, 1)
+	})
+
+	t.Run("buyer and recipient both see a transferred ticket", func(t *testing.T) {
+		recipient := &domain.User{Name: "Recipient", Email: "recipient@test.com", PasswordHash: "h", Role: "client"}
+		require.NoError(t, gdb.Create(recipient).Error)
+		ticket := &domain.Ticket{
+			UserID: u.ID, EventID: e.ID, Status: "transferred", TransferredToID: &recipient.ID,
+			PurchasePrice: 75.0, PurchasedAt: time.Now(),
+		}
+		require.NoError(t, dao.Create(ticket))
+
+		buyerTickets, err := dao.FindByUserID(u.ID)
+		require.NoError(t, err)
+		assert.Contains(t, ticketIDs(buyerTickets), ticket.ID)
+
+		recipientTickets, err := dao.FindByUserID(recipient.ID)
+		require.NoError(t, err)
+		assert.Equal(t, []uint{ticket.ID}, ticketIDs(recipientTickets))
 	})
 
 	t.Run("returns empty list for user with no tickets", func(t *testing.T) {
@@ -152,6 +178,49 @@ func TestTicketDAO_CancelByEvent(t *testing.T) {
 	assert.Equal(t, "cancelled", found.Status)
 }
 
+// Transferred tickets are still valid for their new owner: they must count
+// toward capacity, appear as buyers, and be cancelled with the event.
+// Cancelled tickets must be excluded.
+func TestTicketDAO_TransferredTicketsCountAsValid(t *testing.T) {
+	gdb := setupTestDB(t)
+	dao := NewTicketDAO(gdb)
+	u, e := seedTicketData(t, gdb)
+
+	statuses := []string{"active", "transferred", "cancelled"}
+	ids := make(map[string]uint)
+	for _, st := range statuses {
+		ticket := &domain.Ticket{
+			UserID: u.ID, EventID: e.ID, Status: st,
+			PurchasePrice: 75.0, PurchasedAt: time.Now(),
+		}
+		require.NoError(t, dao.Create(ticket))
+		ids[st] = ticket.ID
+	}
+
+	t.Run("count includes transferred", func(t *testing.T) {
+		count, err := dao.CountActiveByEvent(e.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 2, count)
+	})
+
+	t.Run("find includes transferred", func(t *testing.T) {
+		tickets, err := dao.FindActiveByEvent(e.ID)
+		require.NoError(t, err)
+		assert.Len(t, tickets, 2)
+	})
+
+	t.Run("cancel by event cancels transferred", func(t *testing.T) {
+		require.NoError(t, dao.CancelByEvent(e.ID))
+		found, err := dao.FindByID(ids["transferred"])
+		require.NoError(t, err)
+		assert.Equal(t, "cancelled", found.Status)
+
+		count, err := dao.CountActiveByEvent(e.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 0, count)
+	})
+}
+
 func TestTicketDAO_Save(t *testing.T) {
 	gdb := setupTestDB(t)
 	dao := NewTicketDAO(gdb)
@@ -170,6 +239,37 @@ func TestTicketDAO_Save(t *testing.T) {
 	found, err := dao.FindByID(ticket.ID)
 	require.NoError(t, err)
 	assert.Equal(t, "transferred", found.Status)
+}
+
+// Regression: FindByID preloads User, and saving must not reset UserID
+// back to the preloaded user's ID.
+func TestTicketDAO_Save_ChangesOwnerWithPreloadedUser(t *testing.T) {
+	gdb := setupTestDB(t)
+	dao := NewTicketDAO(gdb)
+	u, e := seedTicketData(t, gdb)
+	newOwner := &domain.User{Name: "NewOwner", Email: "newowner@test.com", PasswordHash: "h", Role: "client"}
+	require.NoError(t, gdb.Create(newOwner).Error)
+
+	ticket := &domain.Ticket{
+		UserID: u.ID, EventID: e.ID, Status: "active",
+		PurchasePrice: 75.0, PurchasedAt: time.Now(),
+	}
+	require.NoError(t, dao.Create(ticket))
+
+	loaded, err := dao.FindByID(ticket.ID)
+	require.NoError(t, err)
+	loaded.UserID = newOwner.ID
+	loaded.TransferredToID = &newOwner.ID
+	loaded.Status = "transferred"
+	require.NoError(t, dao.Save(loaded))
+
+	found, err := dao.FindByID(ticket.ID)
+	require.NoError(t, err)
+	assert.Equal(t, newOwner.ID, found.UserID)
+
+	tickets, err := dao.FindByUserID(newOwner.ID)
+	require.NoError(t, err)
+	assert.Len(t, tickets, 1)
 }
 
 func TestTicketDAO_WithTransaction(t *testing.T) {

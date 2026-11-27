@@ -135,7 +135,9 @@ func (s *TicketService) Cancel(ticketID uint, requestingUserID uint) error {
 	if err != nil {
 		return fmt.Errorf("ticket %d: %w", ticketID, ErrNotFound)
 	}
-	if ticket.UserID != requestingUserID {
+	// Only the current holder can cancel: after a transfer, that is the
+	// recipient, not the original buyer.
+	if ticket.HolderID() != requestingUserID {
 		return fmt.Errorf("ticket %d: %w", ticketID, ErrNotFound)
 	}
 	if ticket.Status == "cancelled" {
@@ -185,8 +187,9 @@ func (s *TicketService) Transfer(ticketID uint, fromUserID uint, input TransferI
 		return fmt.Errorf("ticket %d: %w", ticketID, ErrInvalidTransfer)
 	}
 
+	// UserID stays as the original buyer so both users keep seeing the
+	// ticket; TransferredToID marks the new holder (see Ticket.HolderID).
 	now := time.Now()
-	ticket.UserID = targetUser.ID
 	ticket.TransferredToID = &targetUser.ID
 	ticket.TransferredAt = &now
 	ticket.Status = "transferred"

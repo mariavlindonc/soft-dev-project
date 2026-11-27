@@ -1,8 +1,7 @@
-import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import type { Event } from '../../types'
 import { formatDateTime, formatPrice } from '../../utils/format'
-import { getRandomEventImage } from '../../data/eventImages'
+import { getEventImage } from '../../data/eventImages'
 
 interface EventCardProps {
   event: Event
@@ -32,8 +31,7 @@ function getBadge(event: Event): CardBadge {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const fallbackImage = useMemo(getRandomEventImage, [])
-  const image = event.image_url?.trim().startsWith('http') ? event.image_url!.trim() : fallbackImage
+  const image = getEventImage(event.id, event.image_url)
   const badge = getBadge(event)
 
   return (

@@ -110,6 +110,44 @@ func TestCreateEvent(t *testing.T) {
 		require.Equal(t, http.StatusCreated, w.Code)
 	})
 
+	t.Run("free event with price 0 returns 201", func(t *testing.T) {
+		mockSvc := new(MockEventService)
+		ctrl := NewEventController(mockSvc)
+
+		mockSvc.On("Create", mock.Anything).Return(&domain.Event{
+			ID: 1, Title: "Free Event", EventDate: time.Now(),
+		}, nil)
+
+		r := setupRouter()
+		r.POST("/events", ctrl.Create)
+
+		future := time.Now().Add(48 * time.Hour).Format(time.RFC3339)
+		body := `{"title":"Free Event","event_date":"` + future + `","capacity":100,"price":0}`
+		req := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		require.Equal(t, http.StatusCreated, w.Code)
+	})
+
+	t.Run("negative price returns 400", func(t *testing.T) {
+		mockSvc := new(MockEventService)
+		ctrl := NewEventController(mockSvc)
+
+		r := setupRouter()
+		r.POST("/events", ctrl.Create)
+
+		future := time.Now().Add(48 * time.Hour).Format(time.RFC3339)
+		body := `{"title":"Bad Event","event_date":"` + future + `","capacity":100,"price":-5}`
+		req := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		require.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
 	t.Run("missing title returns 400", func(t *testing.T) {
 		ctrl := NewEventController(new(MockEventService))
 		r := setupRouter()

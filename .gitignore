@@ -32,3 +32,9 @@ coverage
 full_coverage
 tmpcov
 *.out
+coverage.html
+dao_cov*
+daocov
+# Notas locales de trabajo
+mejoras-ceibo*.md
+comandos.md

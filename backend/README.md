@@ -11,7 +11,8 @@ Go 1.26 + Gin + GORM + MySQL + JWT + bcrypt
 ```bash
 cp .env.example .env   # configurar credenciales
 go mod tidy
-go run main.go         # requiere TLS (cert.pem + key.pem)
+go run ./cmd/gencerts  # genera certs/server.crt y certs/server.key (solo la primera vez)
+go run main.go         # requiere TLS (certs/server.crt + certs/server.key)
 ```
 
 ## Estructura

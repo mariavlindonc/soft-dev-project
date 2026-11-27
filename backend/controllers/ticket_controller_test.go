@@ -232,6 +232,31 @@ func TestTransferTicket(t *testing.T) {
 }
 
 func TestPurchaseTicketErrors(t *testing.T) {
+	presaleErrors := map[string]error{
+		"sales not open":         services.ErrSalesNotOpen,
+		"presale code required":  services.ErrPresaleCodeRequired,
+		"invalid presale code":   services.ErrInvalidPresaleCode,
+	}
+	for name, presaleErr := range presaleErrors {
+		t.Run(name+" returns 400", func(t *testing.T) {
+			mockSvc := new(MockTicketService)
+			ctrl := NewTicketController(mockSvc)
+
+			mockSvc.On("Purchase", uint(10), mock.Anything).Return(nil, fmt.Errorf("event 1: %w", presaleErr))
+
+			r := setupRouter()
+			r.POST("/tickets/purchase", setAuthContext("client", 10), ctrl.Purchase)
+
+			body := `{"event_id":1,"quantity":1}`
+			req := httptest.NewRequest(http.MethodPost, "/tickets/purchase", strings.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusBadRequest, w.Code)
+		})
+	}
+
 	t.Run("no capacity returns 400", func(t *testing.T) {
 		mockSvc := new(MockTicketService)
 		ctrl := NewTicketController(mockSvc)
@@ -368,9 +393,18 @@ func TestTicketResponseWithEvent(t *testing.T) {
 		},
 	}
 
-	resp := toTicketResponse(ticket)
+	resp := toTicketResponse(ticket, 10)
 	assert.Equal(t, "Concert", resp.EventTitle)
 	assert.Equal(t, eventDate.Format(time.RFC3339), resp.EventDate)
+	assert.False(t, resp.TransferredOut)
+}
+
+func TestTicketResponseTransferredOut(t *testing.T) {
+	recipientID := uint(20)
+	ticket := &domain.Ticket{ID: 1, UserID: 10, Status: "transferred", TransferredToID: &recipientID}
+
+	assert.True(t, toTicketResponse(ticket, 10).TransferredOut, "buyer gave it away")
+	assert.False(t, toTicketResponse(ticket, 20).TransferredOut, "recipient holds it")
 }
 
 func TestTicketResponseWithoutEvent(t *testing.T) {
@@ -383,7 +417,7 @@ func TestTicketResponseWithoutEvent(t *testing.T) {
 		PurchasedAt:   time.Now(),
 	}
 
-	resp := toTicketResponse(ticket)
+	resp := toTicketResponse(ticket, 10)
 	assert.Equal(t, "", resp.EventTitle)
 	assert.Equal(t, "", resp.EventDate)
 }

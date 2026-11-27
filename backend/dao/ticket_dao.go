@@ -4,6 +4,7 @@ import (
 	"backend/domain"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type TicketDAOImpl struct {
@@ -30,7 +31,8 @@ func (d *TicketDAOImpl) FindByID(id uint) (*domain.Ticket, error) {
 
 func (d *TicketDAOImpl) FindByUserID(userID uint) ([]domain.Ticket, error) {
 	var tickets []domain.Ticket
-	err := d.db.Where("user_id = ?", userID).
+	// Includes tickets the user bought and tickets transferred to them.
+	err := d.db.Where("user_id = ? OR transferred_to_id = ?", userID, userID).
 		Preload("Event").Order("purchased_at DESC").Find(&tickets).Error
 	if err != nil {
 		return nil, err
@@ -38,9 +40,13 @@ func (d *TicketDAOImpl) FindByUserID(userID uint) ([]domain.Ticket, error) {
 	return tickets, nil
 }
 
+// validTicketCondition matches tickets that still grant entry to the event:
+// a transferred ticket is valid for its new owner, so it counts like an active one.
+const validTicketCondition = "event_id = ? AND status IN ('active', 'transferred')"
+
 func (d *TicketDAOImpl) FindActiveByEvent(eventID uint) ([]domain.Ticket, error) {
 	var tickets []domain.Ticket
-	err := d.db.Where("event_id = ? AND status = 'active'", eventID).
+	err := d.db.Where(validTicketCondition, eventID).
 		Preload("User").Find(&tickets).Error
 	if err != nil {
 		return nil, err
@@ -51,7 +57,7 @@ func (d *TicketDAOImpl) FindActiveByEvent(eventID uint) ([]domain.Ticket, error)
 func (d *TicketDAOImpl) CountActiveByEvent(eventID uint) (int, error) {
 	var count int64
 	err := d.db.Model(&domain.Ticket{}).
-		Where("event_id = ? AND status = 'active'", eventID).
+		Where(validTicketCondition, eventID).
 		Count(&count).Error
 	if err != nil {
 		return 0, err
@@ -61,12 +67,15 @@ func (d *TicketDAOImpl) CountActiveByEvent(eventID uint) (int, error) {
 
 func (d *TicketDAOImpl) CancelByEvent(eventID uint) error {
 	return d.db.Model(&domain.Ticket{}).
-		Where("event_id = ? AND status = 'active'", eventID).
+		Where(validTicketCondition, eventID).
 		Update("status", "cancelled").Error
 }
 
+// Save persists only the ticket's own columns. Associations are omitted
+// because FindByID preloads User/Event, and GORM would otherwise overwrite
+// UserID with the preloaded User.ID (breaking transfers).
 func (d *TicketDAOImpl) Save(ticket *domain.Ticket) error {
-	return d.db.Save(ticket).Error
+	return d.db.Omit(clause.Associations).Save(ticket).Error
 }
 
 func (d *TicketDAOImpl) WithTransaction(fn func(TxContext) error) error {

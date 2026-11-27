@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { Ticket } from '../types'
 import * as ticketsApi from '../api/tickets'
+import { getApiErrorMessage } from '../utils/apiError'
 
 export function useTickets() {
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -38,7 +39,8 @@ export function useTickets() {
     }
   }, [])
 
-  const cancelTicket = useCallback(async (id: number) => {
+  // Devuelven null si salió bien, o el mensaje de error para mostrar.
+  const cancelTicket = useCallback(async (id: number): Promise<string | null> => {
     try {
       await ticketsApi.cancelTicket(id)
       setTickets((prev) =>
@@ -46,23 +48,23 @@ export function useTickets() {
           t.id === id ? { ...t, status: 'cancelled' as const, cancelled_at: new Date().toISOString() } : t,
         ),
       )
-      return true
-    } catch {
-      return false
+      return null
+    } catch (err) {
+      return getApiErrorMessage(err, 'No se pudo cancelar la entrada')
     }
   }, [])
 
-  const transferTicket = useCallback(async (id: number, toEmail: string) => {
+  const transferTicket = useCallback(async (id: number, toEmail: string): Promise<string | null> => {
     try {
       await ticketsApi.transferTicket(id, toEmail)
       setTickets((prev) =>
         prev.map((t) =>
-          t.id === id ? { ...t, status: 'transferred' as const, transferred_at: new Date().toISOString() } : t,
+          t.id === id ? { ...t, status: 'transferred' as const, transferred_out: true, transferred_at: new Date().toISOString() } : t,
         ),
       )
-      return true
-    } catch {
-      return false
+      return null
+    } catch (err) {
+      return getApiErrorMessage(err, 'No se pudo transferir la entrada')
     }
   }, [])
 

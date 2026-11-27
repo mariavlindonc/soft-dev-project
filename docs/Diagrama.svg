@@ -1,0 +1,201 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="726" viewBox="0 0 1220 726" font-family="Segoe UI, Arial, sans-serif">
+<defs>
+  <marker id="many" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+    <path d="M0 8 L14 1 M0 8 L14 8 M0 8 L14 15" stroke="#475569" stroke-width="1.6" fill="none"/>
+  </marker>
+  <marker id="one" markerWidth="16" markerHeight="16" refX="14" refY="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+    <path d="M7 1 L7 15 M11 1 L11 15" stroke="#475569" stroke-width="1.6" fill="none"/>
+  </marker>
+  <style>
+    .th { font-size: 15px; font-weight: 700; fill: #ffffff; letter-spacing: 1px; }
+    .key { font-size: 11px; font-weight: 700; fill: #b45309; }
+    .col { font-size: 13px; fill: #0f172a; }
+    .pk { font-weight: 700; text-decoration: underline; }
+    .type { font-size: 11px; fill: #64748b; }
+    .rel { font-size: 12px; fill: #334155; font-style: italic; }
+    .legend { font-size: 12px; fill: #334155; }
+  </style>
+</defs>
+<rect width="100%" height="100%" fill="#f8fafc"/>
+<text x="30" y="30" font-size="18" font-weight="700" fill="#0f172a">Ceibo Tickets — Diagrama Entidad-Relación (MySQL)</text>
+<g>
+<rect x="30" y="140" width="300" height="228" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+<path d="M30 146 a6 6 0 0 1 6 -6 h288 a6 6 0 0 1 6 6 v30 h-300 z" fill="#1e3a5f"/>
+<text x="180" y="163" text-anchor="middle" class="th">USERS</text>
+<rect x="31" y="176" width="298" height="24" fill="#fef3c7"/>
+<text x="40" y="192" class="key">PK</text>
+<text x="72" y="192" class="col pk">id</text>
+<text x="320" y="192" text-anchor="end" class="type">INT UNSIGNED</text>
+<line x1="30" y1="200" x2="330" y2="200" stroke="#e2e8f0"/>
+<text x="40" y="216" class="key"></text>
+<text x="72" y="216" class="col">name</text>
+<text x="320" y="216" text-anchor="end" class="type">VARCHAR(150)</text>
+<line x1="30" y1="224" x2="330" y2="224" stroke="#e2e8f0"/>
+<text x="40" y="240" class="key">UQ</text>
+<text x="72" y="240" class="col">email</text>
+<text x="320" y="240" text-anchor="end" class="type">VARCHAR(255)</text>
+<line x1="30" y1="248" x2="330" y2="248" stroke="#e2e8f0"/>
+<text x="40" y="264" class="key"></text>
+<text x="72" y="264" class="col">password_hash</text>
+<text x="320" y="264" text-anchor="end" class="type">VARCHAR(255)</text>
+<line x1="30" y1="272" x2="330" y2="272" stroke="#e2e8f0"/>
+<text x="40" y="288" class="key"></text>
+<text x="72" y="288" class="col">role</text>
+<text x="320" y="288" text-anchor="end" class="type">ENUM(client, admin)</text>
+<line x1="30" y1="296" x2="330" y2="296" stroke="#e2e8f0"/>
+<text x="40" y="312" class="key"></text>
+<text x="72" y="312" class="col">created_at</text>
+<text x="320" y="312" text-anchor="end" class="type">DATETIME</text>
+<line x1="30" y1="320" x2="330" y2="320" stroke="#e2e8f0"/>
+<text x="40" y="336" class="key"></text>
+<text x="72" y="336" class="col">updated_at</text>
+<text x="320" y="336" text-anchor="end" class="type">DATETIME</text>
+<line x1="30" y1="344" x2="330" y2="344" stroke="#e2e8f0"/>
+<text x="40" y="360" class="key"></text>
+<text x="72" y="360" class="col">deleted_at</text>
+<text x="320" y="360" text-anchor="end" class="type">DATETIME NULL</text>
+</g>
+<g>
+<rect x="440" y="140" width="300" height="516" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+<path d="M440 146 a6 6 0 0 1 6 -6 h288 a6 6 0 0 1 6 6 v30 h-300 z" fill="#1e3a5f"/>
+<text x="590" y="163" text-anchor="middle" class="th">EVENTS</text>
+<rect x="441" y="176" width="298" height="24" fill="#fef3c7"/>
+<text x="450" y="192" class="key">PK</text>
+<text x="482" y="192" class="col pk">id</text>
+<text x="730" y="192" text-anchor="end" class="type">INT UNSIGNED</text>
+<line x1="440" y1="200" x2="740" y2="200" stroke="#e2e8f0"/>
+<text x="450" y="216" class="key"></text>
+<text x="482" y="216" class="col">title</text>
+<text x="730" y="216" text-anchor="end" class="type">VARCHAR(200)</text>
+<line x1="440" y1="224" x2="740" y2="224" stroke="#e2e8f0"/>
+<text x="450" y="240" class="key"></text>
+<text x="482" y="240" class="col">description</text>
+<text x="730" y="240" text-anchor="end" class="type">TEXT NULL</text>
+<line x1="440" y1="248" x2="740" y2="248" stroke="#e2e8f0"/>
+<text x="450" y="264" class="key"></text>
+<text x="482" y="264" class="col">image_url</text>
+<text x="730" y="264" text-anchor="end" class="type">VARCHAR(500) NULL</text>
+<line x1="440" y1="272" x2="740" y2="272" stroke="#e2e8f0"/>
+<text x="450" y="288" class="key"></text>
+<text x="482" y="288" class="col">category</text>
+<text x="730" y="288" text-anchor="end" class="type">VARCHAR(100) NULL</text>
+<line x1="440" y1="296" x2="740" y2="296" stroke="#e2e8f0"/>
+<text x="450" y="312" class="key"></text>
+<text x="482" y="312" class="col">location</text>
+<text x="730" y="312" text-anchor="end" class="type">VARCHAR(300) NULL</text>
+<line x1="440" y1="320" x2="740" y2="320" stroke="#e2e8f0"/>
+<text x="450" y="336" class="key"></text>
+<text x="482" y="336" class="col">event_date</text>
+<text x="730" y="336" text-anchor="end" class="type">DATETIME</text>
+<line x1="440" y1="344" x2="740" y2="344" stroke="#e2e8f0"/>
+<text x="450" y="360" class="key"></text>
+<text x="482" y="360" class="col">duration_minutes</text>
+<text x="730" y="360" text-anchor="end" class="type">INT</text>
+<line x1="440" y1="368" x2="740" y2="368" stroke="#e2e8f0"/>
+<text x="450" y="384" class="key"></text>
+<text x="482" y="384" class="col">capacity</text>
+<text x="730" y="384" text-anchor="end" class="type">INT</text>
+<line x1="440" y1="392" x2="740" y2="392" stroke="#e2e8f0"/>
+<text x="450" y="408" class="key"></text>
+<text x="482" y="408" class="col">tickets_sold</text>
+<text x="730" y="408" text-anchor="end" class="type">INT</text>
+<line x1="440" y1="416" x2="740" y2="416" stroke="#e2e8f0"/>
+<text x="450" y="432" class="key"></text>
+<text x="482" y="432" class="col">price</text>
+<text x="730" y="432" text-anchor="end" class="type">DECIMAL(10,2)</text>
+<line x1="440" y1="440" x2="740" y2="440" stroke="#e2e8f0"/>
+<text x="450" y="456" class="key"></text>
+<text x="482" y="456" class="col">status</text>
+<text x="730" y="456" text-anchor="end" class="type">ENUM(active, presale, …)</text>
+<line x1="440" y1="464" x2="740" y2="464" stroke="#e2e8f0"/>
+<text x="450" y="480" class="key"></text>
+<text x="482" y="480" class="col">presale_active</text>
+<text x="730" y="480" text-anchor="end" class="type">TINYINT(1)</text>
+<line x1="440" y1="488" x2="740" y2="488" stroke="#e2e8f0"/>
+<text x="450" y="504" class="key"></text>
+<text x="482" y="504" class="col">presale_code</text>
+<text x="730" y="504" text-anchor="end" class="type">VARCHAR(100) NULL</text>
+<line x1="440" y1="512" x2="740" y2="512" stroke="#e2e8f0"/>
+<text x="450" y="528" class="key"></text>
+<text x="482" y="528" class="col">presale_start_date</text>
+<text x="730" y="528" text-anchor="end" class="type">DATETIME NULL</text>
+<line x1="440" y1="536" x2="740" y2="536" stroke="#e2e8f0"/>
+<text x="450" y="552" class="key"></text>
+<text x="482" y="552" class="col">general_sale_date</text>
+<text x="730" y="552" text-anchor="end" class="type">DATETIME NULL</text>
+<rect x="441" y="560" width="298" height="24" fill="#e0f2fe"/>
+<line x1="440" y1="560" x2="740" y2="560" stroke="#e2e8f0"/>
+<text x="450" y="576" class="key">FK</text>
+<text x="482" y="576" class="col">created_by_id</text>
+<text x="730" y="576" text-anchor="end" class="type">INT UNSIGNED</text>
+<line x1="440" y1="584" x2="740" y2="584" stroke="#e2e8f0"/>
+<text x="450" y="600" class="key"></text>
+<text x="482" y="600" class="col">created_at</text>
+<text x="730" y="600" text-anchor="end" class="type">DATETIME</text>
+<line x1="440" y1="608" x2="740" y2="608" stroke="#e2e8f0"/>
+<text x="450" y="624" class="key"></text>
+<text x="482" y="624" class="col">updated_at</text>
+<text x="730" y="624" text-anchor="end" class="type">DATETIME</text>
+<line x1="440" y1="632" x2="740" y2="632" stroke="#e2e8f0"/>
+<text x="450" y="648" class="key"></text>
+<text x="482" y="648" class="col">deleted_at</text>
+<text x="730" y="648" text-anchor="end" class="type">DATETIME NULL</text>
+</g>
+<g>
+<rect x="850" y="140" width="300" height="276" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.5"/>
+<path d="M850 146 a6 6 0 0 1 6 -6 h288 a6 6 0 0 1 6 6 v30 h-300 z" fill="#1e3a5f"/>
+<text x="1000" y="163" text-anchor="middle" class="th">TICKETS</text>
+<rect x="851" y="176" width="298" height="24" fill="#fef3c7"/>
+<text x="860" y="192" class="key">PK</text>
+<text x="892" y="192" class="col pk">id</text>
+<text x="1140" y="192" text-anchor="end" class="type">INT UNSIGNED</text>
+<rect x="851" y="200" width="298" height="24" fill="#e0f2fe"/>
+<line x1="850" y1="200" x2="1150" y2="200" stroke="#e2e8f0"/>
+<text x="860" y="216" class="key">FK</text>
+<text x="892" y="216" class="col">user_id</text>
+<text x="1140" y="216" text-anchor="end" class="type">INT UNSIGNED</text>
+<rect x="851" y="224" width="298" height="24" fill="#e0f2fe"/>
+<line x1="850" y1="224" x2="1150" y2="224" stroke="#e2e8f0"/>
+<text x="860" y="240" class="key">FK</text>
+<text x="892" y="240" class="col">event_id</text>
+<text x="1140" y="240" text-anchor="end" class="type">INT UNSIGNED</text>
+<line x1="850" y1="248" x2="1150" y2="248" stroke="#e2e8f0"/>
+<text x="860" y="264" class="key"></text>
+<text x="892" y="264" class="col">status</text>
+<text x="1140" y="264" text-anchor="end" class="type">ENUM(active, cancelled, transferred)</text>
+<line x1="850" y1="272" x2="1150" y2="272" stroke="#e2e8f0"/>
+<text x="860" y="288" class="key"></text>
+<text x="892" y="288" class="col">purchase_price</text>
+<text x="1140" y="288" text-anchor="end" class="type">DECIMAL(10,2)</text>
+<line x1="850" y1="296" x2="1150" y2="296" stroke="#e2e8f0"/>
+<text x="860" y="312" class="key"></text>
+<text x="892" y="312" class="col">purchased_at</text>
+<text x="1140" y="312" text-anchor="end" class="type">DATETIME</text>
+<line x1="850" y1="320" x2="1150" y2="320" stroke="#e2e8f0"/>
+<text x="860" y="336" class="key"></text>
+<text x="892" y="336" class="col">cancelled_at</text>
+<text x="1140" y="336" text-anchor="end" class="type">DATETIME NULL</text>
+<line x1="850" y1="344" x2="1150" y2="344" stroke="#e2e8f0"/>
+<text x="860" y="360" class="key"></text>
+<text x="892" y="360" class="col">transferred_at</text>
+<text x="1140" y="360" text-anchor="end" class="type">DATETIME NULL</text>
+<rect x="851" y="368" width="298" height="24" fill="#e0f2fe"/>
+<line x1="850" y1="368" x2="1150" y2="368" stroke="#e2e8f0"/>
+<text x="860" y="384" class="key">FK</text>
+<text x="892" y="384" class="col">transferred_to_id</text>
+<text x="1140" y="384" text-anchor="end" class="type">INT UNSIGNED NULL</text>
+<line x1="850" y1="392" x2="1150" y2="392" stroke="#e2e8f0"/>
+<text x="860" y="408" class="key"></text>
+<text x="892" y="408" class="col">created_at</text>
+<text x="1140" y="408" text-anchor="end" class="type">DATETIME</text>
+</g>
+<path d="M330 188 H380 V572 H440" fill="none" stroke="#475569" stroke-width="1.6" marker-start="url(#one)" marker-end="url(#many)"/>
+<text x="338" y="180" class="rel">created_by_id</text>
+<path d="M740 188 H795 V236 H850" fill="none" stroke="#475569" stroke-width="1.6" marker-start="url(#one)" marker-end="url(#many)"/>
+<text x="748" y="180" class="rel">event_id</text>
+<path d="M250 140 V110 H1175 V212 H1150" fill="none" stroke="#475569" stroke-width="1.6" marker-start="url(#one)" marker-end="url(#many)"/>
+<text x="600" y="104" class="rel" text-anchor="middle">user_id (dueño actual)</text>
+<path d="M170 140 V78 H1195 V380 H1150" fill="none" stroke="#475569" stroke-width="1.6" stroke-dasharray="6 4" marker-start="url(#one)" marker-end="url(#many)"/>
+<text x="600" y="72" class="rel" text-anchor="middle">transferred_to_id (destinatario, opcional)</text>
+<text x="30" y="696" class="legend">PK = clave primaria · FK = clave foránea · UQ = único · ‖—&lt; relación 1 a N · línea punteada = FK opcional (NULL) · deleted_at = soft-delete</text>
+</svg>

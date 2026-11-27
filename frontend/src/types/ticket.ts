@@ -7,6 +7,8 @@ export interface Ticket {
   purchased_at: string
   event_title: string
   event_date: string
+  /** true si el usuario logueado transfirió esta entrada a otra persona */
+  transferred_out?: boolean
 }
 
 export interface PurchaseRequest {

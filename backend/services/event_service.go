@@ -173,7 +173,13 @@ func (s *EventService) Update(id uint, input UpdateEventInput) (*domain.Event, e
 	// Presale handling.
 	if input.PresaleActive != nil {
 		if *input.PresaleActive {
-			if input.PresaleCode == nil || *input.PresaleCode == "" ||
+			// The API never returns the presale code, so the edit form can't
+			// resend it. If no new code is provided, keep the existing one.
+			presaleCode := input.PresaleCode
+			if presaleCode == nil || *presaleCode == "" {
+				presaleCode = event.PresaleCode
+			}
+			if presaleCode == nil || *presaleCode == "" ||
 				input.PresaleStartDate == nil || *input.PresaleStartDate == "" ||
 				input.GeneralSaleDate == nil || *input.GeneralSaleDate == "" {
 				return nil, fmt.Errorf("%w: presale start date, general sale date, and access code are required when pre-sale is active", ErrInvalidInput)
@@ -195,7 +201,7 @@ func (s *EventService) Update(id uint, input UpdateEventInput) (*domain.Event, e
 			event.PresaleActive = true
 			event.PresaleStartDate = &presaleStart
 			event.GeneralSaleDate = &generalSale
-			event.PresaleCode = input.PresaleCode
+			event.PresaleCode = presaleCode
 		} else {
 			event.PresaleActive = false
 			event.PresaleCode = nil

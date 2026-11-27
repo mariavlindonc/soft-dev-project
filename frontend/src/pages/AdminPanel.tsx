@@ -5,6 +5,7 @@ import { useEvents } from '../hooks/useEvents'
 import * as adminApi from '../api/admin'
 import { getEventById } from '../api/events'
 import { formatDate, formatPrice } from '../utils/format'
+import { validateEventForm, type FormErrors } from '../utils/eventValidation'
 import type { GlobalReport, EventReport, CreateEventData, UpdateEventData } from '../types/admin'
 import type { Event } from '../types'
 
@@ -189,6 +190,10 @@ function AdminEventForm() {
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
+  // El backend nunca devuelve el código de preventa, así que guardamos si el
+  // evento ya tenía preventa para no obligar a reingresarlo al editar.
+  const [hasExistingCode, setHasExistingCode] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -209,6 +214,7 @@ function AdminEventForm() {
           presale_start_date: event.presale_start_date?.slice(0, 16) ?? '',
           general_sale_date: event.general_sale_date?.slice(0, 16) ?? '',
         })
+        setHasExistingCode(event.presale_active)
         setLoading(false)
       })
       .catch(() => {
@@ -217,12 +223,26 @@ function AdminEventForm() {
       })
   }, [id])
 
-  function handleChange(field: string, value: string | number | boolean) {
+  function handleChange(field: keyof CreateEventData, value: string | number | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }))
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+
+    const errors = validateEventForm(form, isEdit, hasExistingCode)
+    setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      setError('Revisá los campos marcados antes de guardar')
+      return
+    }
+
     setSaving(true)
     setError(null)
     try {
@@ -264,7 +284,8 @@ function AdminEventForm() {
       <form className="admin-form" onSubmit={handleSubmit} noValidate>
         <div className="form-group">
           <label htmlFor="title">Título *</label>
-          <input id="title" required value={form.title} onChange={(e) => handleChange('title', e.target.value)} />
+          <input id="title" required className={fieldErrors.title ? 'input-error' : ''} value={form.title} onChange={(e) => handleChange('title', e.target.value)} />
+          {fieldErrors.title && <p className="form-error">{fieldErrors.title}</p>}
         </div>
 
         <div className="form-group">
@@ -286,28 +307,33 @@ function AdminEventForm() {
         <div className="admin-form-row">
           <div className="form-group">
             <label htmlFor="event_date">Fecha del evento *</label>
-            <input id="event_date" type="datetime-local" required value={form.event_date} onChange={(e) => handleChange('event_date', e.target.value)} />
+            <input id="event_date" type="datetime-local" required className={fieldErrors.event_date ? 'input-error' : ''} value={form.event_date} onChange={(e) => handleChange('event_date', e.target.value)} />
+            {fieldErrors.event_date && <p className="form-error">{fieldErrors.event_date}</p>}
           </div>
           <div className="form-group">
             <label htmlFor="duration_minutes">Duración (min)</label>
-            <input id="duration_minutes" type="number" min={1} value={form.duration_minutes ?? ''} onChange={(e) => handleChange('duration_minutes', Number(e.target.value))} />
+            <input id="duration_minutes" type="number" min={1} className={fieldErrors.duration_minutes ? 'input-error' : ''} value={form.duration_minutes ?? ''} onChange={(e) => handleChange('duration_minutes', Number(e.target.value))} />
+            {fieldErrors.duration_minutes && <p className="form-error">{fieldErrors.duration_minutes}</p>}
           </div>
         </div>
 
         <div className="admin-form-row">
           <div className="form-group">
             <label htmlFor="capacity">Capacidad *</label>
-            <input id="capacity" type="number" required min={1} value={form.capacity} onChange={(e) => handleChange('capacity', Number(e.target.value))} />
+            <input id="capacity" type="number" required min={1} className={fieldErrors.capacity ? 'input-error' : ''} value={form.capacity} onChange={(e) => handleChange('capacity', Number(e.target.value))} />
+            {fieldErrors.capacity && <p className="form-error">{fieldErrors.capacity}</p>}
           </div>
           <div className="form-group">
             <label htmlFor="price">Precio *</label>
-            <input id="price" type="number" required min={0} step="0.01" value={form.price} onChange={(e) => handleChange('price', Number(e.target.value))} />
+            <input id="price" type="number" required min={0} step="0.01" className={fieldErrors.price ? 'input-error' : ''} value={form.price} onChange={(e) => handleChange('price', Number(e.target.value))} />
+            {fieldErrors.price && <p className="form-error">{fieldErrors.price}</p>}
           </div>
         </div>
 
         <div className="form-group">
           <label htmlFor="image_url">URL de imagen</label>
-          <input id="image_url" value={form.image_url ?? ''} onChange={(e) => handleChange('image_url', e.target.value)} />
+          <input id="image_url" className={fieldErrors.image_url ? 'input-error' : ''} value={form.image_url ?? ''} onChange={(e) => handleChange('image_url', e.target.value)} />
+          {fieldErrors.image_url && <p className="form-error">{fieldErrors.image_url}</p>}
         </div>
 
         <h2 className="admin-section-title">Preventa</h2>
@@ -321,17 +347,20 @@ function AdminEventForm() {
           <>
             <div className="admin-form-row">
               <div className="form-group">
-                <label htmlFor="presale_code">Código de preventa *</label>
-                <input id="presale_code" required={form.presale_active} placeholder={isEdit ? "Reingresar el código" : ""} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
+                <label htmlFor="presale_code">Código de preventa{hasExistingCode ? '' : ' *'}</label>
+                <input id="presale_code" required={form.presale_active && !hasExistingCode} className={fieldErrors.presale_code ? 'input-error' : ''} placeholder={hasExistingCode ? 'Dejar vacío para mantener el código actual' : ''} value={form.presale_code ?? ''} onChange={(e) => handleChange('presale_code', e.target.value)} />
+                {fieldErrors.presale_code && <p className="form-error">{fieldErrors.presale_code}</p>}
               </div>
               <div className="form-group">
-                <label htmlFor="presale_start_date">Inicio preventa</label>
-                <input id="presale_start_date" type="datetime-local" value={form.presale_start_date ?? ''} onChange={(e) => handleChange('presale_start_date', e.target.value)} />
+                <label htmlFor="presale_start_date">Inicio preventa *</label>
+                <input id="presale_start_date" type="datetime-local" className={fieldErrors.presale_start_date ? 'input-error' : ''} value={form.presale_start_date ?? ''} onChange={(e) => handleChange('presale_start_date', e.target.value)} />
+                {fieldErrors.presale_start_date && <p className="form-error">{fieldErrors.presale_start_date}</p>}
               </div>
             </div>
             <div className="form-group">
-              <label htmlFor="general_sale_date">Inicio venta general</label>
-              <input id="general_sale_date" type="datetime-local" value={form.general_sale_date ?? ''} onChange={(e) => handleChange('general_sale_date', e.target.value)} />
+              <label htmlFor="general_sale_date">Inicio venta general *</label>
+              <input id="general_sale_date" type="datetime-local" className={fieldErrors.general_sale_date ? 'input-error' : ''} value={form.general_sale_date ?? ''} onChange={(e) => handleChange('general_sale_date', e.target.value)} />
+              {fieldErrors.general_sale_date && <p className="form-error">{fieldErrors.general_sale_date}</p>}
             </div>
           </>
         )}

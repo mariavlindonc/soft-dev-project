@@ -25,15 +25,15 @@ El usuario ingresa al sitio, explora el catalogo de eventos con filtros por cate
 
 ## Tecnologias utilizadas
 
-| Capa              | Tecnologia                                    |
-| ----------------- | --------------------------------------------- |
-| **Backend**       | Go 1.26, Gin, GORM                            |
-| **Base de datos** | MySQL 8                                       |
-| **Frontend**      | React 19, TypeScript, Vite                    |
-| **Autenticacion** | JWT (golang-jwt), bcrypt                      |
-| **Testing**       | Go testing + testify + httptest               |
-| **DevOps**        | Docker, Docker Compose, Nginx                 |
-| **Seguridad**     | TLS, headers de seguridad, CORS configurable  |
+| Capa              | Tecnologia                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Backend**       | Go 1.26, Gin, GORM, driver MySQL (go-sql-driver)                                                              |
+| **Base de datos** | MySQL 8                                                                                                       |
+| **Frontend**      | React 19, TypeScript, Vite, React Router, Axios                                                               |
+| **Autenticacion** | JWT (golang-jwt), bcrypt                                                                                      |
+| **Testing**       | Backend: Go testing + testify + httptest + SQLite en memoria (DAOs). Frontend: Vitest + React Testing Library |
+| **DevOps**        | Docker, Docker Compose, Nginx                                                                                 |
+| **Seguridad**     | TLS, headers de seguridad, CORS configurable                                                                  |
 
 ---
 
@@ -53,18 +53,18 @@ El usuario ingresa al sitio, explora el catalogo de eventos con filtros por cate
 Levantá todo el stack (base de datos, backend y frontend) con un solo comando:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/mariavlindonc/soft-dev-projectl
 cd soft-dev-project
 docker-compose up --build
 ```
 
 Los servicios quedan disponibles en:
 
-| Servicio  | URL                          |
-| --------- | ---------------------------- |
-| Frontend  | http://localhost              |
-| Backend   | https://localhost:8443        |
-| MySQL     | localhost:3307                |
+| Servicio | URL                    |
+| -------- | ---------------------- |
+| Frontend | http://localhost       |
+| Backend  | https://localhost:8443 |
+| MySQL    | localhost:3307         |
 
 Para detener y limpiar:
 
@@ -75,12 +75,17 @@ docker-compose down -v        # detiene y elimina los volúmenes (borra la base)
 
 Los datos seed (13 usuarios, 23 eventos, 35 tickets) se cargan automaticamente al iniciar la base por primera vez. Algunos usuarios de prueba:
 
-| Email                       | Password    | Rol      |
-| --------------------------- | ----------- | -------- |
-| carlos@example.com          | carlos123   | admin    |
-| ana@example.com             | ana123      | admin    |
-| sofia@example.com           | sofia123    | cliente  |
-| lautaro@example.com         | lautaro123  | cliente  |
+| Email               | Password    | Rol     |
+| ------------------- | ----------- | ------- |
+| carlos@ceibo.com    | carlos123   | admin   |
+| ana@ceibo.com       | analucia123 | admin   |
+| pedro@ceibo.com     | pedro123    | admin   |
+| sofia@gmail.com     | sofia123    | cliente |
+| lautaro@hotmail.com | lautaro123  | cliente |
+
+El resto de los clientes sigue el patron `[nombre]123` (ver `database/data.sql`).
+
+> **Si el backend no arranca la primera vez:** al crear la base desde cero, MySQL tarda unos segundos en cargar el esquema y los datos, y el backend puede intentar conectarse antes y cerrarse. Se ve como `Exited` en `docker-compose ps`. Basta con esperar unos segundos y ejecutar `docker-compose start backend`.
 
 ### Opcion 2: Local (sin Docker)
 
@@ -93,6 +98,7 @@ cd soft-dev-project
 cd backend
 cp .env.example .env   # configurar credenciales de MySQL
 go mod tidy
+go run ./cmd/gencerts  # genera certs/server.crt y certs/server.key (solo la primera vez)
 go run main.go
 
 # En otra terminal - Frontend
@@ -102,6 +108,22 @@ npm run dev
 ```
 
 Las variables de entorno se configuran en `backend/.env` (ver `.env.example`). El servidor inicia en `https://localhost:8443` (TLS obligatorio) y el frontend en `http://localhost:5173`.
+
+### Ejecutar los tests
+
+```bash
+# Backend: tests unitarios y de integracion con cobertura
+cd backend
+go test ./... -cover
+
+# Frontend: tests unitarios y de componentes, chequeo de tipos y lint
+cd frontend
+npm test
+npm run build
+npm run lint
+```
+
+El detalle de los tests y la cobertura esta en la seccion [Testing](#testing).
 
 ---
 
@@ -139,7 +161,8 @@ soft-dev-project/
 │   ├── schema.sql              # DDL: CREATE TABLE con FK, indices, constraints
 │   └── data.sql                # Datos seed (13 usuarios, 23 eventos, 35 tickets)
 ├── docs/
-│   ├── Diagrama.jpg            # Diagrama ER
+│   ├── Diagrama.png            # Diagrama ER (imagen)
+│   ├── Diagrama.svg            # Diagrama ER (fuente editable)
 │   └── screenshots/            # Capturas de pantalla del sistema
 ├── docker-compose.yml          # Orquestacion de 3 servicios
 └── README.md
@@ -149,32 +172,43 @@ soft-dev-project/
 
 ## Capturas de pantalla
 
-| Vista                      | Imagen                                               |
-| -------------------------- | ---------------------------------------------------- |
-| Pagina principal           | ![Home](docs/screenshots/home.jpg)                   |
-| Catalogo de eventos        | ![Eventos](docs/screenshots/home-events.jpg)         |
-| Detalle de evento          | ![Detalle](docs/screenshots/event-detail.jpg)        |
-| Inicio de sesion           | ![Login](docs/screenshots/login.jpg)                 |
-| Registro de usuario        | ![Register](docs/screenshots/register.jpg)           |
-| Mis Entradas               | ![Mis Entradas](docs/screenshots/my-tickets.jpg)     |
-| Flujo de compra            | ![Compra](docs/screenshots/purchase.jpg)             |
-| Panel administrador        | ![Admin](docs/screenshots/admin-panel.jpg)           |
-| Gestion de eventos (Admin) | ![Admin Eventos](docs/screenshots/admin-events.jpg)  |
-| Reporte de evento (Admin)  | ![Reporte](docs/screenshots/admin-report.jpg)        |
+| Vista                      | Imagen                                              |
+| -------------------------- | --------------------------------------------------- |
+| Pagina principal           | ![Home](docs/screenshots/home.jpg)                  |
+| Catalogo de eventos        | ![Eventos](docs/screenshots/home-events.jpg)        |
+| Detalle de evento          | ![Detalle](docs/screenshots/event-detail.jpg)       |
+| Inicio de sesion           | ![Login](docs/screenshots/login.jpg)                |
+| Registro de usuario        | ![Register](docs/screenshots/register.jpg)          |
+| Mis Entradas               | ![Mis Entradas](docs/screenshots/my-tickets.jpg)    |
+| Flujo de compra            | ![Compra](docs/screenshots/purchase.jpg)            |
+| Panel administrador        | ![Admin](docs/screenshots/admin-panel.jpg)          |
+| Gestion de eventos (Admin) | ![Admin Eventos](docs/screenshots/admin-events.jpg) |
+| Reporte de evento (Admin)  | ![Reporte](docs/screenshots/admin-report.jpg)       |
 
 ---
 
 ## Diagrama de base de datos
 
-![Diagrama ER](docs/Diagrama.jpg)
+![Diagrama ER](docs/Diagrama.png)
+
+La imagen esta en `docs/Diagrama.png` y su fuente editable en `docs/Diagrama.svg`.
 
 El modelo consta de tres tablas principales:
 
-- **users**: almacenamiento de usuarios con roles (cliente/admin), password hasheada con bcrypt, y soft-delete.
-- **events**: eventos con soporte para preventa (codigo + fechas), estados (active, presale, sold_out, cancelled), y capacidad maxima.
-- **tickets**: entradas vendidas con estados (active, cancelled, transferred), precio de compra, y referencia al usuario comprador y al evento.
+- **users**: almacenamiento de usuarios con roles (cliente/admin), email unico, password hasheada con bcrypt, y soft-delete.
+- **events**: eventos con soporte para preventa (codigo + fechas), estados (active, presale, sold_out, cancelled), capacidad maxima y soft-delete.
+- **tickets**: entradas vendidas con estados (active, cancelled, transferred), precio de compra, y referencia al usuario dueño, al evento y al destinatario de una transferencia.
 
-Las relaciones implementadas son: tickets -> users (comprador), tickets -> events (evento), tickets -> users (transferido a), events -> users (creado por). El esquema completo esta en `database/schema.sql` con datos de ejemplo en `database/data.sql` (13 usuarios, 23 eventos, 35 tickets).
+Relaciones implementadas mediante claves foraneas (todas 1 a N):
+
+| Clave foranea               | Referencia  | Significado                                        |
+| --------------------------- | ----------- | -------------------------------------------------- |
+| `events.created_by_id`      | `users.id`  | Administrador que creo el evento                   |
+| `tickets.user_id`           | `users.id`  | Dueño actual de la entrada                         |
+| `tickets.event_id`          | `events.id` | Evento al que pertenece la entrada                 |
+| `tickets.transferred_to_id` | `users.id`  | Destinatario de una transferencia (opcional, NULL) |
+
+El esquema completo esta en `database/schema.sql` con datos de ejemplo en `database/data.sql` (13 usuarios, 23 eventos, 35 tickets).
 
 ---
 
@@ -182,32 +216,37 @@ Las relaciones implementadas son: tickets -> users (comprador), tickets -> event
 
 ### Autenticacion (publicos)
 
-| Metodo | Endpoint                | Descripcion            |
-| ------ | ----------------------- | ---------------------- |
-| POST   | `/api/auth/register`    | Registro de usuario    |
-| POST   | `/api/auth/login`       | Login y obtencion JWT  |
+| Metodo | Endpoint             | Descripcion           |
+| ------ | -------------------- | --------------------- |
+| POST   | `/api/auth/register` | Registro de usuario   |
+| POST   | `/api/auth/login`    | Login y obtencion JWT |
+
+### Eventos (publicos)
+
+| Metodo | Endpoint                      | Descripcion                             |
+| ------ | ----------------------------- | --------------------------------------- |
+| GET    | `/api/events`                 | Listado de eventos (filtros opcionales) |
+| GET    | `/api/events/:id`             | Detalle de un evento                    |
+| GET    | `/api/events/:id/sale-status` | Estado de venta de un evento            |
 
 ### Cliente (requieren JWT)
 
-| Metodo | Endpoint                        | Descripcion                           |
-| ------ | ------------------------------- | ------------------------------------- |
-| GET    | `/api/events`                   | Listado de eventos (filtros opcionales) |
-| GET    | `/api/events/:id`               | Detalle de un evento                  |
-| GET    | `/api/events/:id/sale-status`   | Estado de venta de un evento          |
-| POST   | `/api/tickets/purchase`         | Compra de entrada                     |
-| GET    | `/api/tickets`                  | Mis entradas                          |
-| PATCH  | `/api/tickets/:id/cancel`       | Cancelar entrada                      |
-| PATCH  | `/api/tickets/:id/transfer`     | Transferir entrada a otro usuario     |
+| Metodo | Endpoint                    | Descripcion                       |
+| ------ | --------------------------- | --------------------------------- |
+| POST   | `/api/tickets/purchase`     | Compra de entrada                 |
+| GET    | `/api/tickets`              | Mis entradas                      |
+| PATCH  | `/api/tickets/:id/cancel`   | Cancelar entrada                  |
+| PATCH  | `/api/tickets/:id/transfer` | Transferir entrada a otro usuario |
 
 ### Administrador (requieren JWT + rol admin)
 
-| Metodo | Endpoint                          | Descripcion                    |
-| ------ | --------------------------------- | ------------------------------ |
-| POST   | `/api/admin/events`               | Crear evento                   |
-| PUT    | `/api/admin/events/:id`           | Actualizar evento              |
-| DELETE | `/api/admin/events/:id`           | Cancelar evento                |
-| GET    | `/api/admin/reports`              | Reporte global de ocupacion    |
-| GET    | `/api/admin/reports/events/:id`   | Reporte de un evento specifico |
+| Metodo | Endpoint                        | Descripcion                    |
+| ------ | ------------------------------- | ------------------------------ |
+| POST   | `/api/admin/events`             | Crear evento                   |
+| PUT    | `/api/admin/events/:id`         | Actualizar evento              |
+| DELETE | `/api/admin/events/:id`         | Cancelar evento                |
+| GET    | `/api/admin/reports`            | Reporte global de ocupacion    |
+| GET    | `/api/admin/reports/events/:id` | Reporte de un evento specifico |
 
 ### Seguridad
 
@@ -255,28 +294,46 @@ go test ./... -coverprofile=coverage.out
 go tool cover -html=coverage.out -o coverage.html
 ```
 
-Con Docker:
+Sin tener Go instalado, usando Docker (la imagen del backend solo contiene el binario compilado, por eso se usa la imagen oficial de Go):
 
 ```bash
-docker-compose exec backend go test ./... -v -cover
+docker run --rm -v "${PWD}/backend:/app" -w /app golang:1.26-alpine go test ./... -cover
 ```
 
 ### Cobertura por paquete
 
-| Paquete        | Tipo                              | Cobertura |
-| -------------- | --------------------------------- | :-------: |
-| `domain/`      | Unitario (puro, sin dependencias) |  100.0%   |
-| `utils/`       | Unitario (puro)                   |   90.9%   |
-| `clients/`     | Unitario (con testify/mock)       |   93.5%   |
-| `logger/`      | Unitario (con testify)            |  100.0%   |
-| `services/`    | Unitario (con testify/mock)       |   99.3%   |
-| `controllers/` | Integracion (httptest)            |   95.2%   |
+**360 tests, todos pasan. Cobertura total del backend: 81.7%** (objetivo de la consigna: 80%, principalmente en servicios y controladores).
+
+| Paquete               | Tipo                                    | Cobertura |
+| --------------------- | --------------------------------------- | :-------: |
+| `services/`           | Unitario (con testify/mock)             | **99.3%** |
+| `controllers/`        | Integracion HTTP (httptest)             | **95.2%** |
+| `domain/`             | Unitario (puro, sin dependencias)       |  100.0%   |
+| `logger/`             | Unitario (con testify)                  |  100.0%   |
+| `clients/`            | Unitario (con testify)                  |   93.5%   |
+| `utils/`              | Unitario (puro)                         |   90.9%   |
+| `cmd/gencerts/`       | Unitario (archivos temporales)          |   53.3%   |
+| `dao/`                | Integracion (SQLite en memoria)         |   48.5%   |
+| `backend` (`main.go`) | Unitario (middlewares CORS y seguridad) |   38.1%   |
+| **Total**             |                                         | **81.7%** |
+
+Los paquetes con menor cobertura lo son por diseño: en `dao/`, el archivo `connection.go` (conexion a MySQL, migraciones y TLS) necesita un servidor MySQL real; en `main.go` y `cmd/gencerts/`, la funcion `main()` solo arma y arranca la aplicacion. La logica de negocio (servicios) y la capa HTTP (controladores) superan ampliamente el 80%.
+
+Para ver la cobertura linea por linea:
+
+```bash
+cd backend
+go test ./... -coverprofile=coverage.out
+go tool cover -func=coverage.out      # resumen por funcion (la ultima linea es el total)
+go tool cover -html=coverage.out      # abre el reporte en el navegador
+```
 
 ### Estrategia de testing
 
 - **Dominio**: pruebas puras de logica sin dependencias externas. `CurrentSalePhase()` se testea con 9 subtests cubriendo las 4 fases de venta mas casos borde.
 - **Servicios**: usan **testify/mock** para simular los DAOs y el cliente de email. Cada servicio se testea de forma aislada sin base de datos.
-- **Controladores**: usan **net/http/httptest** para enviar requests HTTP directamente contra los handlers con servicios mockeados.
+- **Controladores**: usan **net/http/httptest** para enviar requests HTTP directamente contra los handlers con servicios mockeados, validando status codes en casos exitosos y de error.
+- **DAOs**: se prueban contra una base **SQLite en memoria** con GORM, verificando que las consultas reales funcionen sin depender de MySQL.
 - **Mocks**: definidos en `services/mocks_test.go` y `controllers/mocks_test.go`. Interfaces de DAO como costuras (seams) para inyeccion de dependencias.
 
 ### Tests de dominio
@@ -292,30 +349,82 @@ docker-compose exec backend go test ./... -v -cover
 | `password_test.go` | HashPassword, CheckPassword (correcta, incorrecta, vacia), HashPasswordUnique |
 | `jwt_test.go`      | GenerateJWT, ValidateToken (valido, firma invalida, malformado, vacio)        |
 
+### Tests de acceso a datos (DAO)
+
+| Archivo              | Casos cubiertos                                                                                                                                                         |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user_dao_test.go`   | Create (exito, email duplicado), FindByID y FindByEmail (encontrado y no encontrado)                                                                                    |
+| `event_dao_test.go`  | Create, FindByID, FindAll (filtros por categoria, fechas y precio; oculta eventos pasados), Update, Delete, IncrementTicketsSold, DecrementTicketsSold (sin bajar de 0) |
+| `ticket_dao_test.go` | Create, FindByID, FindByUserID, FindActiveByEvent, CountActiveByEvent, CancelByEvent, Save, WithTransaction                                                             |
+| `connection_test.go` | getEnvOrDefault (valor presente, ausente y vacio)                                                                                                                       |
+
+### Tests de clients, logger y configuracion
+
+| Archivo                | Casos cubiertos                                                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `email_client_test.go` | Seleccion de proveedor (default, log, smtp, desconocido), envio de confirmacion de compra, cancelacion y transferencia (log y SMTP con host invalido) |
+| `logger_test.go`       | Niveles Info, Warn, Error, Debug y Fatal, salida a stdout/stderr, formato JSON                                                                        |
+| `main_test.go`         | parseOrigins, isOriginAllowed, headers de seguridad, CORS (preflight 204, origen permitido y no permitido)                                            |
+| `gencerts_test.go`     | Generacion de clave y certificado, escritura de archivos PEM validos                                                                                  |
+
 ### Tests de servicios
 
-| Archivo                  | Casos cubiertos                                                                                                                                                                                                                                                                      |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `auth_service_test.go`   | Register (exito, password corta, email duplicado, error de conexion en busqueda, error de creacion), Login (exito, password incorrecta, email desconocido), GenerateToken, NotFound error                                                                                            |
-| `event_service_test.go`  | GetAll, GetByID (exito, no encontrado), Create (valido, titulo vacio, capacidad cero, fecha pasada, presale activo, presale invalido, DAO error, campos opcionales), Cancel (activo, ya cancelado, no encontrado, error en Update, error en CancelByEvent), Update (exito, cancelado, no encontrado, multiples campos, Date/Duration, presale activo/inactivo, fechas invalidas, DAO error), validatePresaleConfig (todas las ramas) |
+| Archivo                  | Casos cubiertos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth_service_test.go`   | Register (exito, password corta, email duplicado, error de conexion en busqueda, error de creacion), Login (exito, password incorrecta, email desconocido), GenerateToken, NotFound error                                                                                                                                                                                                                                                                                                      |
+| `event_service_test.go`  | GetAll, GetByID (exito, no encontrado), Create (valido, titulo vacio, capacidad cero, fecha pasada, presale activo, presale invalido, DAO error, campos opcionales), Cancel (activo, ya cancelado, no encontrado, error en Update, error en CancelByEvent), Update (exito, cancelado, no encontrado, multiples campos, Date/Duration, presale activo/inactivo, conserva el codigo de preventa si no se envia uno nuevo, fechas invalidas, DAO error), validatePresaleConfig (todas las ramas)  |
 | `ticket_service_test.go` | Purchase (exito, quantity 0 default, evento cancelado, sin capacidad, count error, create tx error, fase no abierta, no encontrado), PurchasePresale (codigo correcto, sin codigo, codigo incorrecto), CancelTicket (propio, ajeno, ya cancelado, save tx error, no encontrado), Transfer (a otro usuario, a si mismo, save tx error, ticket no encontrado, no propio, ya cancelado, ya transferido, target no encontrado), GetByUser, emails (user/event not found, send fails), toTicketInfo |
-| `report_service_test.go` | GetEventReport (exito, no encontrado, count error, findActive error ignorado, capacity 0, findUser error ignorado), GetGlobalReport (exito, FindAll error, count error)                                                                                                            |
+| `report_service_test.go` | GetEventReport (exito, no encontrado, count error, findActive error ignorado, capacity 0, findUser error ignorado), GetGlobalReport (exito, FindAll error, count error)                                                                                                                                                                                                                                                                                                                        |
 
 ### Tests de controladores
 
-| Archivo                      | Casos cubiertos                                                                                                                                                                                             |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `middleware_test.go`         | AuthRequired (sin header, formato invalido, token malformado), AdminRequired (admin pasa, client 403, sin rol 403)                                                                                          |
-| `auth_controller_test.go`    | Register (201, 400 campos faltantes, 400 email duplicado, 500 token error, 500 server error), Login (200 con token, 401 credenciales invalidas, 400 campo faltante), userFriendlyError (3 casos), helpers (isNotFound, optionalString, timePtrToString) |
-| `event_controller_test.go`   | GetAll (200, filtros category/date/price, filtros invalidos, error servicio), GetByID (200, 404, 400, 500), Create (201, 400 campos faltantes, 400 fecha invalida, 400 service error, 500), Update (200, 404, 400, 400 cancelled, 400 json invalido, 500), Delete (204, 404, 400), GetSaleStatus (200 presale, 400 invalid id, 404, cancelled, sold out, no presale, 500), salePhaseMessage (todas las fases) |
-| `ticket_controller_test.go`  | Purchase (201, 400 evento cancelado, 400 sin capacidad, 400 no encontrado, 400 campo faltante, 500), GetMyTickets (200, 500, empty), Cancel (204, 404, 400, 500), Transfer (200, 400 campo faltante, 400 invalid id, 404, 500), toTicketResponse (con/sin evento) |
-| `admin_controller_test.go`   | GetReports (200, 500), GetEventReport (200, 404, 400, 500), toGlobalReportResponse, toEventReportResponse                                                                                                  |
+| Archivo                     | Casos cubiertos                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `middleware_test.go`        | AuthRequired (sin header, formato invalido, token malformado), AdminRequired (admin pasa, client 403, sin rol 403)                                                                                                                                                                                                                                                                                                                                                 |
+| `auth_controller_test.go`   | Register (201, 400 campos faltantes, 400 email duplicado, 500 token error, 500 server error), Login (200 con token, 401 credenciales invalidas, 400 campo faltante), userFriendlyError (3 casos), helpers (isNotFound, optionalString, timePtrToString)                                                                                                                                                                                                            |
+| `event_controller_test.go`  | GetAll (200, filtros category/date/price, filtros invalidos, error servicio), GetByID (200, 404, 400, 500), Create (201, 201 evento gratis con precio 0, 400 precio negativo, 400 campos faltantes, 400 fecha invalida, 400 service error, 500), Update (200, 404, 400, 400 cancelled, 400 json invalido, 500), Delete (204, 404, 400), GetSaleStatus (200 presale, 400 invalid id, 404, cancelled, sold out, no presale, 500), salePhaseMessage (todas las fases) |
+| `ticket_controller_test.go` | Purchase (201, 400 evento cancelado, 400 sin capacidad, 400 no encontrado, 400 campo faltante, 400 venta no abierta, 400 falta codigo de preventa, 400 codigo de preventa invalido, 500), GetMyTickets (200, 500, empty), Cancel (204, 404, 400, 500), Transfer (200, 400 campo faltante, 400 invalid id, 404, 500), toTicketResponse (con/sin evento)                                                                                                             |
+| `admin_controller_test.go`  | GetReports (200, 500), GetEventReport (200, 404, 400, 500), toGlobalReportResponse, toEventReportResponse                                                                                                                                                                                                                                                                                                                                                          |
+
+### Tests de frontend (testing avanzado)
+
+Como capa extra de testing, el frontend tiene **43 tests** con **Vitest** y **React Testing Library** (entorno `jsdom`), que corren sin necesidad del backend.
+
+```bash
+cd frontend
+npm test              # corre todos los tests una vez
+npm run test:watch    # modo watch: re-ejecuta al guardar
+```
+
+| Archivo                   | Tipo                   | Casos cubiertos                                                                                                                                                                        |
+| ------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `eventValidation.test.ts` | Unitario               | Validaciones del formulario de eventos: titulo, fecha futura (solo al crear), capacidad, precio (0 es valido), duracion, URL de imagen, reglas de preventa y codigo opcional al editar |
+| `apiError.test.ts`        | Unitario               | Traduccion de cada error del backend al castellano, mensaje generico para errores desconocidos, backend caido y errores que no son de la API                                           |
+| `eventImages.test.ts`     | Unitario               | Imagen propia vs. imagen de respaldo, misma imagen para el mismo evento                                                                                                                |
+| `format.test.ts`          | Unitario               | Precio ("Gratis" y separador de miles) y formato de fecha y hora                                                                                                                       |
+| `PaymentModal.test.tsx`   | Funcional (componente) | Renderiza el modal de compra y simula clics: compra exitosa, error con el motivo real, backend caido y cancelar                                                                        |
+
+Los tests estan junto al codigo que prueban (`*.test.ts` / `*.test.tsx`) y no se incluyen en el build de produccion.
 
 ---
 
 ## Bonus Track
 
-**Reserva de entradas**: funcionalidad adicional que permite al usuario reservar una entrada temporalmente antes de concretar la compra. La reserva ocupa el cupo del evento durante un periodo de tiempo limitado, y si no se confirma la compra en ese lapso, la entrada se libera automaticamente y el cupo vuelve a estar disponible para otros usuarios.
+**Preventa con codigo de acceso y fases de venta**: un administrador puede activar una preventa para un evento, definiendo un codigo de acceso, la fecha de inicio de la preventa y la fecha de inicio de la venta general (inicio de preventa < venta general < fecha del evento). Segun el momento en que se intenta comprar, el evento esta en una de estas fases:
+
+| Fase           | Quien puede comprar                                |
+| -------------- | -------------------------------------------------- |
+| `not_yet_open` | Nadie (la preventa todavia no empezo)              |
+| `presale`      | Solo quien ingresa el codigo de preventa correcto  |
+| `public`       | Cualquier usuario registrado                       |
+| `no_presale`   | Cualquier usuario registrado (evento sin preventa) |
+
+Donde esta implementado:
+
+- **Dominio**: `backend/domain/event.go` — campos `PresaleActive`, `PresaleCode`, `PresaleStartDate`, `GeneralSaleDate` y el metodo `CurrentSalePhase(now)`, que calcula la fase actual.
+- **Service**: `TicketService.Purchase` valida la fase y el codigo antes de vender (`ErrSalesNotOpen`, `ErrPresaleCodeRequired`, `ErrInvalidPresaleCode`). `EventService` valida la configuracion de la preventa al crear o editar un evento.
+- **Endpoint**: `GET /api/events/:id/sale-status` devuelve la fase de venta actual del evento.
+- **Frontend**: el detalle del evento pide el codigo cuando el evento esta en fase `presale`, y el panel de administracion permite configurar la preventa en el formulario de eventos.
 
 ---
 
